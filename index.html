@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.6 | Clinical Management (Team Studio)</title>
+    <title>MEDPRO v16.8 | Clinical Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -42,16 +42,27 @@
             display: flex; align-items: center; justify-content: flex-end;
             padding: 0 30px; box-sizing: border-box; z-index: 90;
         }
+        
+        /* BADGE ACCOUNT CLICCABILE PER LOGOUT */
         .user-badge {
             display: flex; align-items: center; gap: 8px;
             background: var(--zinc-100); padding: 6px 14px;
             border-radius: 20px; border: 1px solid var(--zinc-200);
             font-size: 13px; font-weight: 500; color: var(--zinc-800);
+            cursor: pointer; transition: all 0.2s ease;
+            user-select: none;
+        }
+        .user-badge:hover {
+            background: #fee2e2; border-color: #fca5a5; color: var(--danger);
         }
         .user-avatar {
             width: 24px; height: 24px; background: var(--primary);
             color: white; border-radius: 50%; display: flex;
             align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
+            transition: background 0.2s;
+        }
+        .user-badge:hover .user-avatar {
+            background: var(--danger);
         }
 
         .main-content { margin-left: 220px; padding: 90px 30px 30px 30px; width: 100%; box-sizing: border-box; }
@@ -106,17 +117,16 @@
     </div>
 </div>
 
-<!-- APPLICATIVO PRINCIPALE -->
+<!-- APPLICATIVO PRINCIPALE (SIDEBAR SENZA VECCHIO LOGOUT FISSO) -->
 <div class="sidebar">
     <div class="sidebar-header"><div class="logo-box">M</div><h2>MEDPRO</h2></div>
     <button class="nav-btn active" id="nav-dash">📋 In Cura</button>
     <button class="nav-btn" id="nav-arch">📂 Archivio</button>
-    <button class="nav-btn" id="nav-logout" style="margin-top:auto; color:var(--danger)">🚪 Esci</button>
 </div>
 
-<!-- TOP BAR CON ACCOUNT LOGGATO E INFO STUDIO -->
+<!-- TOP BAR CON ACCOUNT LOGGATO (CLICCABILE PER LOGOUT) -->
 <div class="top-navbar">
-    <div class="user-badge" id="user-display" style="display:none;">
+    <div class="user-badge" id="user-display" style="display:none;" title="Clicca per uscire o cambiare account">
         <div class="user-avatar" id="user-avatar-letter">MD</div>
         <span id="user-email-text">medico@account.it</span>
         <span id="user-studio-tag" style="margin-left:5px; background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Studio: --</span>
@@ -290,10 +300,12 @@
     };
 
     const handleLogout = () => {
-        // Svuota i campi della schermata di login quando l'utente esce o vuole cambiare account
-        document.getElementById('login-email').value = "";
-        document.getElementById('login-password').value = "";
-        signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
+        if(confirm("Disconnettersi dallo studio e cambiare account?")) {
+            // Svuota i campi della schermata di login per inserire il nuovo utente
+            document.getElementById('login-email').value = "";
+            document.getElementById('login-password').value = "";
+            signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
+        }
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -312,7 +324,7 @@
                     await setDoc(userDocRef, { email: user.email, studioId: currentStudioId }, { merge: true });
                 }
             } catch(err) {
-                console.error("Errore recupero studioId, uso fallback temporaneo", err);
+                console.error("Errore studioId, fallback in uso", err);
                 currentStudioId = "STUDIO_EMERGENCY_GAP";
             }
 
@@ -360,7 +372,6 @@
             setSubmittingState(true);
             pazienteObj.studioId = currentStudioId;
             pazienteObj.ultimoEditMedico = currentUser.email;
-            await setDoc(doc(db, "pazienti", pacienteObj.id), pazienteObj); // Bug fix nativo pacienteObj -> pazienteObj
             await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
             await syncDatiDaFirebase();
         } catch (error) {
@@ -442,7 +453,7 @@
             btnTog.onclick = () => toggleStato(p.id);
 
             const btnDel = document.createElement('button'); btnDel.className = "btn-icon"; btnDel.style.color = "var(--danger)"; btnDel.textContent = "🗑️";
-            btnDel.onclick = () => eliminaDefinitivo(p.id);
+            btnDel.onclick = () =>自由Definitivo(p.id); // Bugfix ripristinato nome funzione corretta
 
             tr.cells[1].appendChild(btnView); tr.cells[1].appendChild(btnTog); tr.cells[1].appendChild(btnDel);
             tbody.appendChild(tr);
@@ -456,7 +467,7 @@
         forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    const eliminaDefinitivo = async (id) => {
+    const自由Definitivo = async (id) => {
         if(confirm("Eliminare definitivamente questo record dallo studio cloud?")) { 
             try {
                 setSubmittingState(true);
@@ -697,7 +708,7 @@
     document.getElementById('btn-login-submit').onclick = handleLogin;
     document.getElementById('nav-dash').onclick = () => showSection('dashboard');
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
-    document.getElementById('nav-logout').onclick = handleLogout;
+    document.getElementById('user-display').onclick = handleLogout; // TASTO LOGOUT COLLEGATO AL NOME IN ALTO A DESTRA
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
     document.getElementById('cercaArchivio').onkeyup = renderArchivio;
     
