@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.1 | Clinical Management</title>
+    <title>MEDPRO v16.2 | Clinical Management (Secure)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,13 +22,11 @@
             padding-right: env(safe-area-inset-right);
         }
         
-        /* SCHERMATA LOGIN */
         #login-screen {
             position: fixed; top:0; left:0; width:100%; height:100%; background: var(--zinc-100);
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
 
-        /* SIDEBAR */
         .sidebar { 
             width: 220px; background: var(--zinc-800); color: white; 
             height: 100vh; position: fixed; display: flex; flex-direction: column; z-index: 100; 
@@ -38,7 +36,6 @@
         .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
         .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        /* MAIN CONTENT */
         .main-content { margin-left: 220px; padding: 30px; width: 100%; box-sizing: border-box; }
         .card { background: white; border: 1px solid var(--zinc-200); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
@@ -48,6 +45,7 @@
         .diag-item.active { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 4px 0 0 var(--primary); }
         
         button { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-icon { padding: 8px; background: #f1f5f9; color: var(--zinc-800); font-size: 16px; min-width: 38px; }
         .btn-view { background: var(--primary); color: white; }
         .btn-del { background: var(--danger); color: white; }
@@ -96,7 +94,7 @@
         <h2 style="text-align:center; margin-top:0; color:var(--primary)">MEDPRO Login</h2>
         <input type="email" id="login-email" placeholder="Email">
         <input type="password" id="login-password" placeholder="Password">
-        <button class="btn-view" style="width:100%;" onclick="handleLogin()">ACCEDI</button>
+        <button class="btn-view" style="width:100%;" id="btn-login-submit">ACCEDI</button>
         <p id="login-error" style="color:var(--danger); text-align:center; margin-top:15px; font-size:12px; margin-bottom:0;"></p>
     </div>
 </div>
@@ -104,16 +102,16 @@
 <!-- APPLICATIVO PRINCIPALE -->
 <div class="sidebar">
     <div class="sidebar-header"><div class="logo-box">M</div><h2>MEDPRO</h2></div>
-    <button class="nav-btn active" onclick="showSection('dashboard')" id="nav-dash">📋 In Cura</button>
-    <button class="nav-btn" onclick="showSection('archivio')" id="nav-arch">📂 Archivio</button>
-    <button class="nav-btn" onclick="handleLogout()" style="margin-top:auto; color:var(--danger)">🚪 Esci</button>
+    <button class="nav-btn active" id="nav-dash">📋 In Cura</button>
+    <button class="nav-btn" id="nav-arch">📂 Archivio</button>
+    <button class="nav-btn" id="nav-logout" style="margin-top:auto; color:var(--danger)">🚪 Esci</button>
 </div>
 
 <div class="main-content">
     <div id="section-dashboard">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
             <h1>Dashboard</h1>
-            <button class="btn-view" style="background: var(--success);" onclick="apriModalPaziente(false)">+ NUOVO</button>
+            <button class="btn-view" style="background: var(--success);" id="btn-nuovo-paziente">+ NUOVO</button>
         </div>
         <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
@@ -125,7 +123,7 @@
 
     <div id="section-archivio" class="hidden">
         <h1>Archivio Storico</h1>
-        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente..." onkeyup="renderArchivio()">
+        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente...">
         <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
                 <thead><tr><th>Nominativo</th><th>Azioni</th></tr></thead>
@@ -136,18 +134,18 @@
 
     <div id="section-clinica" class="hidden">
         <div style="display:flex; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
-            <button onclick="showSection('dashboard')" class="btn-del" style="background:var(--zinc-500)">← ESCI</button>
+            <button id="btn-esci-clinica" class="btn-del" style="background:var(--zinc-500)">← ESCI</button>
             <div style="display:flex; gap:8px;">
-                <button id="btn-ripristina-clinica" class="btn-view hidden" style="background:var(--success)" onclick="toggleStato(curPz.id, true)">RIPRISTINA</button>
-                <button class="btn-view" style="background:var(--danger)" onclick="generaStampa()">📄 STAMPA</button>
-                <button class="btn-view" style="background:var(--zinc-800)" onclick="salvaEChiudi()">💾 SALVA</button>
+                <button id="btn-ripristina-clinica" class="btn-view hidden" style="background:var(--success)">RIPRISTINA</button>
+                <button id="btn-stampa-clinica" class="btn-view" style="background:var(--danger)">📄 STAMPA</button>
+                <button id="btn-salva-clinica" class="btn-view" style="background:var(--zinc-800)">💾 SALVA</button>
             </div>
         </div>
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items: center;">
                 <div>
                     <h2 id="cli-nome" style="margin:0; font-size: 20px; display: inline-block;">--</h2>
-                    <button onclick="apriModalPaziente(true)" class="btn-icon">⚙️</button>
+                    <button id="btn-edit-anagrafica" class="btn-icon">⚙️</button>
                     <p id="cli-info" style="color:var(--zinc-500); white-space: pre-line; margin-top:5px; font-size:12px;"></p>
                 </div>
             </div>
@@ -155,7 +153,7 @@
         <div class="clinica-grid">
             <div>
                 <h3>Diagnosi</h3>
-                <button class="btn-view" style="width:100%; margin-bottom:15px;" onclick="document.getElementById('modal-diagnosi').classList.remove('hidden')">+ AGGIUNGI</button>
+                <button class="btn-view" style="width:100%; margin-bottom:15px;" id="btn-apri-modal-diagnosi">+ AGGIUNGI</button>
                 <div id="cli-lista-diag"></div>
             </div>
             <div id="area-focus" class="hidden">
@@ -163,7 +161,7 @@
                     <h2 id="focus-titolo" style="margin-bottom:5px;">--</h2>
                     <div id="focus-sintesi" style="background:var(--zinc-100); padding:10px; border-radius:8px; margin-bottom:20px; font-style:italic; color:var(--zinc-800); border-left: 3px solid var(--zinc-500);"></div>
                     
-                    <button class="btn-view" style="margin-bottom:15px;" onclick="document.getElementById('modal-piano').classList.remove('hidden')">+ NUOVO PIANO</button>
+                    <button class="btn-view" style="margin-bottom:15px;" id="btn-apri-modal-piano">+ NUOVO PIANO</button>
                     <div id="focus-imbuto"></div>
                 </div>
             </div>
@@ -183,8 +181,8 @@
         <input type="text" id="m-cf" placeholder="Codice Fiscale">
         <input type="text" id="m-tel" placeholder="Telefono">
         <input type="email" id="m-email" placeholder="Email">
-        <button class="btn-view" style="width:100%" onclick="salvaAnagrafica()">SALVA</button>
-        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">CHIUDI</button>
+        <button class="btn-view" style="width:100%" id="btn-salva-anagrafica">SALVA</button>
+        <button class="btn-del close-modal-btn" style="width:100%; margin-top:8px;">CHIUDI</button>
     </div>
 </div>
 
@@ -194,8 +192,8 @@
         <input type="text" id="m-diag-nome" placeholder="Patologia">
         <input type="text" id="m-diag-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-diag-sintesi" placeholder="Note..."></textarea>
-        <button class="btn-view" style="width:100%" onclick="salvaDiagnosi()">SALVA</button>
-        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">CHIUDI</button>
+        <button class="btn-view" style="width:100%" id="btn-salva-diagnosi">SALVA</button>
+        <button class="btn-del close-modal-btn" style="width:100%; margin-top:8px;">CHIUDI</button>
     </div>
 </div>
 
@@ -204,8 +202,8 @@
         <h3>Nuovo Piano</h3>
         <input type="text" id="m-piano-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-piano-testo" placeholder="Dettagli..."></textarea>
-        <button class="btn-view" style="width:100%" onclick="salvaPiano()">CREA</button>
-        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">ANNULLA</button>
+        <button class="btn-view" style="width:100%" id="btn-crea-piano">CREA</button>
+        <button class="btn-del close-modal-btn" style="width:100%; margin-top:8px;">ANNULLA</button>
     </div>
 </div>
 
@@ -231,15 +229,32 @@
     let currentUser = null;
     let elencoPazientiCache = [];
     
-    window.curPz = null;
-    window.curDiagIdx = null;
-    window.editMode = false;
-    window.openDiarioIdx = null;
+    let curPz = null;
+    let curDiagIdx = null;
+    let editMode = false;
+    let openDiarioIdx = null;
+
+    // Helper per mitigazione XSS elementare nelle stringhe HTML
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function(match) {
+            const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+            return escape[match];
+        });
+    }
+
+    // Cambia lo stato visivo dei pulsanti durante le chiamate di rete
+    function setSubmittingState(isSubmit) {
+        document.querySelectorAll('button').forEach(btn => {
+            btn.disabled = isSubmit;
+        });
+    }
 
     // ---- FUNZIONI AUTH ----
-    window.handleLogin = async () => {
+    const handleLogin = async () => {
         const emailEl = document.getElementById('login-email');
         const passEl = document.getElementById('login-password');
+        const errorEl = document.getElementById('login-error');
         
         if (!emailEl || !passEl) return;
 
@@ -249,15 +264,18 @@
         if (!email || !pass) return alert("Inserisci email e password.");
 
         try {
-            document.getElementById('login-error').innerText = "Accesso in corso...";
+            errorEl.innerText = "Accesso in corso...";
+            setSubmittingState(true);
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err) {
             alert("Credenziali errate o utente non configurato su Firebase.");
-            document.getElementById('login-error').innerText = "Accesso fallito. Riprova.";
+            errorEl.innerText = "Accesso fallito. Riprova.";
+        } finally {
+            setSubmittingState(false);
         }
     };
 
-    window.handleLogout = () => {
+    const handleLogout = () => {
         signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
     };
 
@@ -266,7 +284,7 @@
             currentUser = user;
             document.getElementById('login-screen').classList.add('hidden');
             await syncDatiDaFirebase();
-            window.showSection('dashboard');
+            showSection('dashboard');
         } else {
             currentUser = null;
             elencoPazientiCache = [];
@@ -292,167 +310,239 @@
     async function salvaPazienteSuCloud(pazienteObj) {
         if(!currentUser) return;
         try {
+            setSubmittingState(true);
             pazienteObj.userId = currentUser.uid;
-            // Bug corretto: cambiato da pacienteObj a pazienteObj
             await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
             await syncDatiDaFirebase();
         } catch (error) {
-            alert("Errore di salvataggio su Firebase:\n" + error.message + "\n\nVerifica le Regole (Rules) del database.");
+            alert("Errore di salvataggio su Firebase:\n" + error.message);
             throw error;
+        } finally {
+            setSubmittingState(false);
         }
     }
 
     // ---- LOGICA APPLICATIVA ----
-    window.chiudiTutto = () => { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
+    const chiudiTutto = () => { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
 
-    window.showSection = async (id) => {
+    const showSection = (id) => {
         document.querySelectorAll('.main-content > div').forEach(s => s.classList.add('hidden'));
         const section = document.getElementById('section-' + id);
         if (section) section.classList.remove('hidden');
         
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(id==='dashboard') window.renderDashboard();
-        if(id==='archivio') window.renderArchivio();
+        if(id==='dashboard') {
+            document.getElementById('nav-dash').classList.add('active');
+            renderDashboard();
+        }
+        if(id==='archivio') {
+            document.getElementById('nav-arch').classList.add('active');
+            renderArchivio();
+        }
     }
 
-    window.salvaAnagrafica = async () => {
+    const salvaAnagrafica = async () => {
         const nome = document.getElementById('m-nome').value.trim();
         const cf = document.getElementById('m-cf').value.trim();
         if(!nome || !cf) return alert("Nome e CF sono obbligatori.");
         
-        let dati = { nome, cf, nascita: document.getElementById('m-nascita').value, via: document.getElementById('m-via').value, tel: document.getElementById('m-tel').value, email: document.getElementById('m-email').value };
+        let dati = { 
+            nome, 
+            cf, 
+            nascita: document.getElementById('m-nascita').value, 
+            via: document.getElementById('m-via').value, 
+            tel: document.getElementById('m-tel').value, 
+            email: document.getElementById('m-email').value 
+        };
         
-        if(window.editMode) {
-            Object.assign(window.curPz, dati);
+        if(editMode) {
+            Object.assign(curPz, dati);
         } else { 
             const id = "PZ-" + Date.now(); 
-            window.curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
+            curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
         }
         
         try {
-            await salvaPazienteSuCloud(window.curPz);
-            window.chiudiTutto(); 
-            window.renderDashboard();
-        } catch (e) {
-            // L'errore viene già gestito con alert dentro salvaPazienteSuCloud
-        }
+            await salvaPazienteSuCloud(curPz);
+            chiudiTutto(); 
+            if(editMode) apriClinica(curPz.id); else showSection('dashboard');
+        } catch (e) {}
     }
 
-    window.renderDashboard = () => {
+    const renderDashboard = () => {
         const tbody = document.getElementById('lista-attivi'); tbody.innerHTML = "";
         elencoPazientiCache.filter(p => p.stato === 'attivo').forEach(p => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${p.dataApertura}</td><td><strong>${p.nome}</strong></td>
-            <td><button class="btn-icon" id="view-${p.id}">👁️</button>
-            <button class="btn-icon" id="tog-${p.id}">📂</button></td>`;
-            tbody.appendChild(tr);
+            
+            const tdData = document.createElement('td');
+            tdData.textContent = p.dataApertura;
+            
+            const tdNome = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = p.nome;
+            tdNome.appendChild(strong);
 
-            document.getElementById(`view-${p.id}`).onclick = () => window.apriClinica(p.id);
-            document.getElementById(`tog-${p.id}`).onclick = () => window.toggleStato(p.id);
+            const tdAzioni = document.createElement('td');
+            const btnView = document.createElement('button');
+            btnView.className = "btn-icon";
+            btnView.textContent = "👁️";
+            btnView.onclick = () => apriClinica(p.id);
+
+            const btnTog = document.createElement('button');
+            btnTog.className = "btn-icon";
+            btnTog.textContent = "📂";
+            btnTog.onclick = () => toggleStato(p.id);
+
+            tdAzioni.appendChild(btnView);
+            tdAzioni.appendChild(btnTog);
+
+            tr.appendChild(tdData);
+            tr.appendChild(tdNome);
+            tr.appendChild(tdAzioni);
+            tbody.appendChild(tr);
         });
     }
 
-    window.renderArchivio = () => {
+    const renderArchivio = () => {
         const q = document.getElementById('cercaArchivio').value.toLowerCase();
         const tbody = document.getElementById('lista-archiviati'); tbody.innerHTML = "";
         elencoPazientiCache.filter(p => p.stato === 'archiviato' && p.nome.toLowerCase().includes(q)).forEach(p => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><strong>${p.nome}</strong></td>
-            <td><button class="btn-icon" id="archview-${p.id}">👁️</button>
-            <button class="btn-icon" id="archi-tog-${p.id}">🔄</button>
-            <button class="btn-icon" style="color:var(--danger)" id="del-${p.id}">🗑️</button></td>`;
-            tbody.appendChild(tr);
+            
+            const tdNome = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = p.nome;
+            tdNome.appendChild(strong);
 
-            document.getElementById(`archview-${p.id}`).onclick = () => window.apriClinica(p.id);
-            document.getElementById(`archi-tog-${p.id}`).onclick = () => window.toggleStato(p.id);
-            document.getElementById(`del-${p.id}`).onclick = () => window.eliminaDefinitivo(p.id);
+            const tdAzioni = document.createElement('td');
+            
+            const btnView = document.createElement('button');
+            btnView.className = "btn-icon";
+            btnView.textContent = "👁️";
+            btnView.onclick = () => apriClinica(p.id);
+
+            const btnTog = document.createElement('button');
+            btnTog.className = "btn-icon";
+            btnTog.textContent = "🔄";
+            btnTog.onclick = () => toggleStato(p.id);
+
+            const btnDel = document.createElement('button');
+            btnDel.className = "btn-icon";
+            btnDel.style.color = "var(--danger)";
+            btnDel.textContent = "🗑️";
+            btnDel.onclick = () => eliminaDefinitivo(p.id);
+
+            tdAzioni.appendChild(btnView);
+            tdAzioni.appendChild(btnTog);
+            tdAzioni.appendChild(btnDel);
+            
+            tr.appendChild(tdNome);
+            tr.appendChild(tdAzioni);
+            tbody.appendChild(tr);
         });
     }
 
-    window.toggleStato = async (id, forceOpen=false) => {
+    const toggleStato = async (id, forceOpen=false) => {
         let p = elencoPazientiCache.find(x => x.id === id);
         p.stato = (p.stato === 'attivo' ? 'archiviato' : 'attivo');
         await salvaPazienteSuCloud(p);
-        forceOpen ? window.apriClinica(id) : window.showSection('dashboard');
+        forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    window.eliminaDefinitivo = async (id) => {
+    const eliminaDefinitivo = async (id) => {
         if(confirm("Eliminare definitivamente questo record dal cloud?")) { 
-            await deleteDoc(doc(db, "pazienti", id));
-            await syncDatiDaFirebase();
-            window.renderArchivio(); 
+            try {
+                setSubmittingState(true);
+                await deleteDoc(doc(db, "pazienti", id));
+                await syncDatiDaFirebase();
+                renderArchivio();
+            } catch(e) {
+                alert("Impossibile eliminare: " + e.message);
+            } finally {
+                setSubmittingState(false);
+            }
         } 
     }
 
-    window.apriClinica = (id) => {
-        window.curPz = elencoPazientiCache.find(x => x.id === id); 
-        window.showSection('clinica');
-        document.getElementById('cli-nome').innerText = window.curPz.nome;
-        document.getElementById('cli-info').innerText = `Nascita: ${window.curPz.nascita}\nCF: ${window.curPz.cf}\nTel: ${window.curPz.tel}`;
-        document.getElementById('btn-ripristina-clinica').className = window.curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
+    const apriClinica = (id) => {
+        curPz = elencoPazientiCache.find(x => x.id === id); 
+        showSection('clinica');
+        document.getElementById('cli-nome').textContent = curPz.nome;
+        document.getElementById('cli-info').textContent = `Nascita: ${curPz.nascita}\nCF: ${curPz.cf}\nTel: ${curPz.tel}`;
+        document.getElementById('btn-ripristina-clinica').className = curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
         document.getElementById('area-focus').classList.add('hidden'); 
-        window.renderDiagnosi();
+        renderDiagnosi();
     }
 
-    window.salvaDiagnosi = async () => {
-        window.curPz.diagnosi.push({ 
+    const salvaDiagnosi = async () => {
+        curPz.diagnosi.push({ 
             nome: document.getElementById('m-diag-nome').value, 
             data: document.getElementById('m-diag-data').value || '--', 
             sintesi: document.getElementById('m-diag-sintesi').value, 
             piani: [] 
         });
-        await salvaPazienteSuCloud(window.curPz);
+        await salvaPazienteSuCloud(curPz);
         
         document.getElementById('m-diag-nome').value = "";
         document.getElementById('m-diag-data').value = "";
         document.getElementById('m-diag-sintesi').value = "";
-        window.chiudiTutto(); 
-        window.renderDiagnosi();
+        chiudiTutto(); 
+        renderDiagnosi();
     }
 
-    window.renderDiagnosi = () => {
+    const renderDiagnosi = () => {
         const cont = document.getElementById('cli-lista-diag'); cont.innerHTML = "";
-        window.curPz.diagnosi.forEach((d, i) => {
+        curPz.diagnosi.forEach((d, i) => {
             const row = document.createElement('div');
-            row.className = `diag-item ${window.curDiagIdx===i?'active':''}`;
-            row.innerHTML = `<div style="flex:1;" id="focus-click-${i}"><strong>${d.nome}</strong><br><small>${d.data}</small></div>
-            <button id="del-diag-${i}" style="background:none; border:none; font-size:20px;">&times;</button>`;
-            cont.appendChild(row);
+            row.className = `diag-item ${curDiagIdx===i?'active':''}`;
+            
+            const divClick = document.createElement('div');
+            divClick.style.flex = "1";
+            divClick.innerHTML = `<strong>${escapeHTML(d.nome)}</strong><br><small>${escapeHTML(d.data)}</small>`;
+            divClick.onclick = () => apriFocus(i);
 
-            document.getElementById(`focus-click-${i}`).onclick = () => window.apriFocus(i);
-            document.getElementById(`del-diag-${i}`).onclick = () => window.eliminaDiagnosi(i);
+            const btnDel = document.createElement('button');
+            btnDel.style.background = "none";
+            btnDel.style.border = "none";
+            btnDel.style.fontSize = "20px";
+            btnDel.innerHTML = "&times;";
+            btnDel.onclick = () => eliminaDiagnosi(i);
+
+            row.appendChild(divClick);
+            row.appendChild(btnDel);
+            cont.appendChild(row);
         });
     }
 
-    window.eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { window.curPz.diagnosi.splice(idx, 1); await window.salvaEChiudi(true); } }
+    const eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { curPz.diagnosi.splice(idx, 1); await salvaEChiudi(true); } }
 
-    window.apriFocus = (idx) => {
-        window.curDiagIdx = idx; 
+    const apriFocus = (idx) => {
+        curDiagIdx = idx; 
         document.getElementById('area-focus').classList.remove('hidden');
-        const diag = window.curPz.diagnosi[idx];
-        document.getElementById('focus-titolo').innerText = diag.nome;
+        const diag = curPz.diagnosi[idx];
+        document.getElementById('focus-titolo').textContent = diag.nome;
         
         const sBox = document.getElementById('focus-sintesi');
-        sBox.innerText = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita per questa diagnosi.";
-        window.renderImbuto();
+        sBox.textContent = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita per questa diagnosi.";
+        renderImbuto();
     }
 
-    window.salvaPiano = async () => {
-        window.curPz.diagnosi[window.curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
-        await salvaPazienteSuCloud(window.curPz); 
-        window.chiudiTutto(); 
-        window.renderImbuto();
+    const salvaPiano = async () => {
+        curPz.diagnosi[curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
+        await salvaPazienteSuCloud(curPz); 
+        chiudiTutto(); 
+        renderImbuto();
     }
 
-    window.toggleDiarioBanner = (pIdx) => { window.openDiarioIdx = (window.openDiarioIdx === pIdx) ? null : pIdx; window.renderImbuto(); }
+    const toggleDiarioBanner = (pIdx) => { openDiarioIdx = (openDiarioIdx === pIdx) ? null : pIdx; renderImbuto(); }
 
-    window.renderImbuto = () => {
+    const renderImbuto = () => {
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
-        window.curPz.diagnosi[window.curDiagIdx].piani.forEach((p, pIdx) => {
-            const isDiarioOpen = window.openDiarioIdx === pIdx;
+        curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
+            const isDiarioOpen = openDiarioIdx === pIdx;
             let html = `<div class="piano-box">
-                <button id="del-piano-${pIdx}" style="float:right; background:none; border:none;">&times;</button>
-                <strong>PIANO DEL: ${p.data}</strong><p style="margin:8px 0;">${p.testo}</p>
+                <button id="del-piano-${pIdx}" style="float:right; background:none; border:none; font-size:16px; cursor:pointer;">&times;</button>
+                <strong>PIANO DEL: ${escapeHTML(p.data)}</strong><p style="margin:8px 0; white-space:pre-line;">${escapeHTML(p.testo)}</p>
                 <button id="tog-dia-${pIdx}" class="btn-view" style="background:${isDiarioOpen?'var(--zinc-800)':'var(--primary)'}">${isDiarioOpen ? 'CHIUDI' : '📋 DIARIO'}</button>
                 <div class="banner-diario ${isDiarioOpen ? '' : 'hidden'}">
                     <div style="display:flex; gap:8px; flex-direction:column;">
@@ -462,8 +552,8 @@
                     </div>
                     <div id="diario-list-${pIdx}">`;
             p.diario.forEach((n, nIdx) => {
-                html += `<div class="nota-item"><button id="del-nota-${pIdx}-${nIdx}" style="float:right; background:none; border:none;">&times;</button>
-                <small><strong>${n.data}</strong></small><br>${n.testo}</div>`;
+                html += `<div class="nota-item"><button id="del-nota-${pIdx}-${nIdx}" style="float:right; background:none; border:none; cursor:pointer;">&times;</button>
+                <small><strong>${escapeHTML(n.data)}</strong></small><br>${escapeHTML(n.testo)}</div>`;
             });
             html += `</div></div></div>`;
             
@@ -471,68 +561,68 @@
             wrap.innerHTML = html;
             cont.appendChild(wrap);
 
-            document.getElementById(`del-piano-${pIdx}`).onclick = () => window.eliminaPiano(pIdx);
-            document.getElementById(`tog-dia-${pIdx}`).onclick = () => window.toggleDiarioBanner(pIdx);
+            document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
+            document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
             if(isDiarioOpen){
-                document.getElementById(`add-nota-${pIdx}`).onclick = () => window.aggiungiNota(pIdx);
+                document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
                 p.diario.forEach((n, nIdx) => {
-                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = () => window.eliminaNota(pIdx, nIdx);
+                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = () => eliminaNota(pIdx, nIdx);
                 });
             }
         });
     }
 
-    window.aggiungiNota = async (pIdx) => {
+    const aggiungiNota = async (pIdx) => {
         const t = document.getElementById('in-nota-' + pIdx).value;
         const d = document.getElementById('date-nota-' + pIdx).value || '--';
         if(!t) return; 
-        window.curPz.diagnosi[window.curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
-        await salvaPazienteSuCloud(window.curPz); 
-        window.renderImbuto();
+        curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
+        await salvaPazienteSuCloud(curPz); 
+        renderImbuto();
     }
 
-    window.eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { window.curPz.diagnosi[window.curDiagIdx].piani.splice(idx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
-    window.eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { window.curPz.diagnosi[window.curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
+    const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
     
-    window.salvaEChiudi = async (keep=false) => { 
-        await salvaPazienteSuCloud(window.curPz); 
-        if(!keep) window.showSection('dashboard'); else window.renderDiagnosi(); 
+    const salvaEChiudi = async (keep=false) => { 
+        await salvaPazienteSuCloud(curPz); 
+        if(!keep) showSection('dashboard'); else renderDiagnosi(); 
     }
     
-    window.apriModalPaziente = (edit) => {
-        window.editMode = edit;
+    const apriModalPaziente = (edit) => {
+        editMode = edit;
         if(edit) {
-            document.getElementById('m-nome').value = window.curPz.nome; document.getElementById('m-cf').value = window.curPz.cf;
-            document.getElementById('m-nascita').value = window.curPz.nascita; document.getElementById('m-via').value = window.curPz.via;
-            document.getElementById('m-tel').value = window.curPz.tel; document.getElementById('m-email').value = window.curPz.email;
+            document.getElementById('m-nome').value = curPz.nome; document.getElementById('m-cf').value = curPz.cf;
+            document.getElementById('m-nascita').value = curPz.nascita; document.getElementById('m-via').value = curPz.via;
+            document.getElementById('m-tel').value = curPz.tel; document.getElementById('m-email').value = curPz.email;
         } else { ['m-nome','m-nascita','m-via','m-cf','m-tel','m-email'].forEach(id => document.getElementById(id).value=""); }
         document.getElementById('modal-pz').classList.remove('hidden');
     }
 
-    window.generaStampa = () => {
-        if(!window.curPz) return;
+    const generaStampa = () => {
+        if(!curPz) return;
         const printSection = document.getElementById('print-section');
         let html = `<div style="font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff;">
             <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 30px;">
                 <h1 style="margin:0; text-transform: uppercase;">Cartella Clinica</h1>
-                <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.1 | Report del ${new Date().toLocaleDateString()}</p>
+                <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.2 | Report del ${new Date().toLocaleDateString()}</p>
             </div>
             <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
-                <div><strong>Paziente:</strong> ${window.curPz.nome}<br><strong>Data Nascita:</strong> ${window.curPz.nascita || '--'}<br><strong>CF:</strong> ${window.curPz.cf || '--'}</div>
-                <div><strong>Telefono:</strong> ${window.curPz.tel || '--'}<br><strong>Email:</strong> ${window.curPz.email || '--'}<br><strong>Indirizzo:</strong> ${window.curPz.via || '--'}</div>
+                <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
+                <div><strong>Telefono:</strong> ${escapeHTML(curPz.tel) || '--'}<br><strong>Email:</strong> ${escapeHTML(curPz.email) || '--'}<br><strong>Indirizzo:</strong> ${escapeHTML(curPz.via) || '--'}</div>
             </div>`;
 
-        if (window.curPz.diagnosi) {
-            window.curPz.diagnosi.forEach(d => {
+        if (curPz.diagnosi) {
+            curPz.diagnosi.forEach(d => {
                 html += `<div style="margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px;">
-                    <div style="background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px;">PATOLOGIA: ${d.nome} (${d.data})</div>
-                    <p><strong>Note Diagnosi:</strong> ${d.sintesi || '--'}</p>`;
+                    <div style="background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px;">PATOLOGIA: ${escapeHTML(d.nome)} (${escapeHTML(d.data)})</div>
+                    <p><strong>Note Diagnosi:</strong> ${escapeHTML(d.sintesi) || '--'}</p>`;
                 if (d.piani) d.piani.forEach(p => {
                     html += `<div style="margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px;">
-                        <div style="font-weight: bold; text-decoration: underline;">Piano Terapeutico del ${p.data}</div>
-                        <p style="margin: 5px 0;">${p.testo}</p>`;
+                        <div style="font-weight: bold; text-decoration: underline;">Piano Terapeutico del ${escapeHTML(p.data)}</div>
+                        <p style="margin: 5px 0; white-space:pre-line;">${escapeHTML(p.testo)}</p>`;
                     if (p.diario) p.diario.forEach(n => {
-                        html += `<div style="font-size: 12px; margin-top: 5px; border-top: 1px solid #f1f1f1;"><strong>${n.data}:</strong> ${n.testo}</div>`;
+                        html += `<div style="font-size: 12px; margin-top: 5px; border-top: 1px solid #f1f1f1;"><strong>${escapeHTML(n.data)}:</strong> ${escapeHTML(n.testo)}</div>`;
                     });
                     html += `</div>`;
                 });
@@ -542,6 +632,31 @@
         printSection.innerHTML = html + `</div>`;
         setTimeout(() => { window.print(); }, 300);
     }
+
+    // ---- ATTACCO DEGLI EVENT LISTENER LATO DOM ----
+    document.getElementById('btn-login-submit').onclick = handleLogin;
+    document.getElementById('nav-dash').onclick = () => showSection('dashboard');
+    document.getElementById('nav-arch').onclick = () => showSection('archivio');
+    document.getElementById('nav-logout').onclick = handleLogout;
+    document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
+    document.getElementById('cercaArchivio').onkeyup = renderArchivio;
+    
+    document.getElementById('btn-esci-clinica').onclick = () => showSection('dashboard');
+    document.getElementById('btn-ripristina-clinica').onclick = () => toggleStato(curPz.id, true);
+    document.getElementById('btn-stampa-clinica').onclick = generaStampa;
+    document.getElementById('btn-salva-clinica').onclick = () => salvaEChiudi();
+    document.getElementById('btn-edit-anagrafica').onclick = () => apriModalPaziente(true);
+    document.getElementById('btn-apri-modal-diagnosi').onclick = () => document.getElementById('modal-diagnosi').classList.remove('hidden');
+    document.getElementById('btn-apri-modal-piano').onclick = () => document.getElementById('modal-piano').classList.remove('hidden');
+    
+    document.getElementById('btn-salva-anagrafica').onclick = salvaAnagrafica;
+    document.getElementById('btn-salva-diagnosi').onclick = salvaDiagnosi;
+    document.getElementById('btn-crea-piano').onclick = salvaPiano;
+
+    document.querySelectorAll('.close-modal-btn').forEach(btn => {
+        btn.onclick = chiudiTutto;
+    });
+
 </script>
 </body>
 </html>
