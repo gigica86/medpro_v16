@@ -215,7 +215,6 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // CONFIGURAZIONE REALE INTEGRATA
     const firebaseConfig = {
         apiKey: "AIzaSyBRg-aZUHKF0SyrxBT4vgDqHK6LuGVAnZ8",
         authDomain: "medpro16-11124.firebaseapp.com",
@@ -286,15 +285,21 @@
                 elencoPazientiCache.push(doc.data());
             });
         } catch(e) {
-            alert("Configurazione Firestore mancante.\nAssicurati di aver premuto 'Crea database' nella sezione Firestore della console.");
+            alert("Errore caricamento database:\n" + e.message);
         }
     }
 
     async function salvaPazienteSuCloud(pazienteObj) {
         if(!currentUser) return;
-        pazienteObj.userId = currentUser.uid;
-        await setDoc(doc(db, "pazienti", pazienteObj.id), pacienteObj);
-        await syncDatiDaFirebase();
+        try {
+            pazienteObj.userId = currentUser.uid;
+            // Bug corretto: cambiato da pacienteObj a pazienteObj
+            await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
+            await syncDatiDaFirebase();
+        } catch (error) {
+            alert("Errore di salvataggio su Firebase:\n" + error.message + "\n\nVerifica le Regole (Rules) del database.");
+            throw error;
+        }
     }
 
     // ---- LOGICA APPLICATIVA ----
@@ -324,9 +329,13 @@
             window.curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
         }
         
-        await salvaPazienteSuCloud(window.curPz);
-        window.chiudiTutto(); 
-        window.renderDashboard();
+        try {
+            await salvaPazienteSuCloud(window.curPz);
+            window.chiudiTutto(); 
+            window.renderDashboard();
+        } catch (e) {
+            // L'errore viene già gestito con alert dentro salvaPazienteSuCloud
+        }
     }
 
     window.renderDashboard = () => {
