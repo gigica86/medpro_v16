@@ -90,19 +90,18 @@
 </head>
 <body>
 
-<!-- SCHERMATA LOGIN -->
+<!-- SCHERMATA LOGIN (SOLO ACCESSO) -->
 <div id="login-screen">
     <div class="card" style="width:100%; max-width:350px; padding: 25px;">
         <h2 style="text-align:center; margin-top:0; color:var(--primary)">MEDPRO Login</h2>
         <input type="email" id="login-email" placeholder="Email">
         <input type="password" id="login-password" placeholder="Password">
-        <button class="btn-view" style="width:100%; margin-bottom: 10px;" onclick="handleLogin()">ACCEDI</button>
-        <button class="btn-view" style="width:100%; background: var(--zinc-500);" onclick="handleRegister()">REGISTRATI</button>
-        <p id="login-error" style="color:var(--danger); text-align:center; margin-top:10px; font-size:12px;"></p>
+        <button class="btn-view" style="width:100%;" onclick="handleLogin()">ACCEDI</button>
+        <p id="login-error" style="color:var(--danger); text-align:center; margin-top:15px; font-size:12px; margin-bottom:0;"></p>
     </div>
 </div>
 
-<!-- APPLICATIVO PRINCIPALE (Nascosto di base finché non si è loggati) -->
+<!-- APPLICATIVO PRINCIPALE -->
 <div class="sidebar">
     <div class="sidebar-header"><div class="logo-box">M</div><h2>MEDPRO</h2></div>
     <button class="nav-btn active" onclick="showSection('dashboard')" id="nav-dash">📋 In Cura</button>
@@ -206,18 +205,17 @@
         <input type="text" id="m-piano-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-piano-testo" placeholder="Dettagli..."></textarea>
         <button class="btn-view" style="width:100%" onclick="salvaPiano()">CREA</button>
-        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">ANNULLA</button>
+        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="ANNULLA()">ANNULLA</button>
     </div>
 </div>
 
 <!-- SCRIPTS INTEGRATI FIREBASE (V10 MODULARE VIA CDN) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // ---- CONFIGURAZIONE FIREBASE ----
-    // Sostituisci questi valori con quelli presi dalla tua console Firebase
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_AUTH_DOMAIN",
@@ -231,29 +229,18 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Variabili di stato globali nel modulo
     let currentUser = null;
     let elencoPazientiCache = [];
     let curPz = null, curDiagIdx = null, editMode = false, openDiarioIdx = null;
 
-    // ---- FUNZIONI AUTH (Esposte a window per i trigger inline degli elementi HTML) ----
+    // ---- FUNZIONI AUTH ----
     window.handleLogin = async () => {
         const email = document.getElementById('login-email').value.trim();
         const pass = document.getElementById('login-password').value;
         try {
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err) {
-            document.getElementById('login-error').innerText = "Errore: " + err.message;
-        }
-    };
-
-    window.handleRegister = async () => {
-        const email = document.getElementById('login-email').value.trim();
-        const pass = document.getElementById('login-password').value;
-        try {
-            await createUserWithEmailAndPassword(auth, email, pass);
-        } catch (err) {
-            document.getElementById('login-error').innerText = "Registrazione Fallita: " + err.message;
+            document.getElementById('login-error').innerText = "Accesso fallito. Verifica le credenziali.";
         }
     };
 
@@ -261,7 +248,6 @@
         signOut(auth);
     };
 
-    // Monitoraggio stato utente loggato
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
@@ -288,12 +274,12 @@
 
     async function salvaPazienteSuCloud(pazienteObj) {
         if(!currentUser) return;
-        pazienteObj.userId = currentUser.uid; // Collega il dato all'utente loggato
+        pazienteObj.userId = currentUser.uid;
         await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
         await syncDatiDaFirebase();
     }
 
-    // ---- LOGICA APPLICATIVA ADATTATA DA LOCALSTORAGE A FIREBASE ----
+    // ---- LOGICA APPLICATIVA ----
     window.chiudiTutto = () => { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
 
     window.showSection = async (id) => {
