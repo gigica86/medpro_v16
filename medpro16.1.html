@@ -3,128 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <title>MEDPRO v16.1 | Clinical Management</title>
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="MEDPRO">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/180/2563eb/ffffff?text=MP">
 
     <style>
         :root {
-            --primary: #2563eb; --success: #16a34a; --danger: #dc2626;
-            --zinc-100: #f4f4f5; --zinc-400: #a1a1aa; --zinc-500: #71717a; --zinc-800: #27272a;
-            --border: #e2e8f0; --text: #18181b;
+            --primary: #1e40af; --success: #15803d; --danger: #b91c1c;
+            --zinc-50: #f8fafc; --zinc-100: #f1f5f9; --zinc-200: #e2e8f0;
+            --zinc-500: #64748b; --zinc-800: #1e293b; --border: #cbd5e1; --text: #0f172a;
         }
 
         body { 
             font-family: 'Inter', -apple-system, system-ui, sans-serif; 
-            background: #fafafa; margin: 0; display: flex; color: var(--text); font-size: 13px; 
-            min-height: 100vh; -webkit-tap-highlight-color: transparent;
+            background: var(--zinc-50); margin: 0; display: flex; color: var(--text); 
+            font-size: 14px; line-height: 1.5; min-height: 100vh;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
         
-        /* SIDEBAR (Desktop) */
+        /* SCHERMATA LOGIN */
+        #login-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: var(--zinc-100);
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+
+        /* SIDEBAR */
         .sidebar { 
-            width: 180px; background: var(--zinc-800); color: white; 
-            height: 100vh; position: fixed; padding: 15px 0; 
-            display: flex; flex-direction: column; z-index: 100; 
+            width: 220px; background: var(--zinc-800); color: white; 
+            height: 100vh; position: fixed; display: flex; flex-direction: column; z-index: 100; 
         }
-        .sidebar h2 { padding: 0 15px; font-size: 11px; color: var(--success); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
-        .nav-btn { padding: 12px 15px; cursor: pointer; color: #a1a1aa; border:none; background:none; width:100%; text-align:left; font-size:12px; transition: 0.2s; }
-        .nav-btn:hover, .nav-btn.active { background: #3f3f46; color: white; }
+        .sidebar-header { padding: 25px 20px; display: flex; align-items: center; gap: 12px; }
+        .logo-box { width: 35px; height: 35px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white; font-size: 20px; }
+        .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
+        .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        .main-content { margin-left: 180px; padding: 20px; width: calc(100% - 180px); box-sizing: border-box; }
-        .card { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        /* MAIN CONTENT */
+        .main-content { margin-left: 220px; padding: 30px; width: 100%; box-sizing: border-box; }
+        .card { background: white; border: 1px solid var(--zinc-200); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
-        /* GRID */
-        .clinica-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        .clinica-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
         
-        .diag-item { 
-            padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; 
-            cursor: pointer; display: flex; align-items: flex-start; 
-            background: white; transition: all 0.2s;
-        }
-        .diag-item:hover { border-color: var(--primary); }
-        .diag-item.active { border-color: var(--primary); border-left: 5px solid var(--primary); background: #eff6ff; }
+        .diag-item { padding: 12px; border: 1px solid var(--zinc-200); border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; background: white; transition: 0.2s; }
+        .diag-item.active { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 4px 0 0 var(--primary); }
         
-        .diag-content { flex-grow: 1; overflow: hidden; }
-        .diag-content strong { font-size: 13px; color: var(--zinc-800); }
-        .diag-sintesi { font-size: 11px; color: var(--zinc-500); margin-top: 4px; line-height: 1.4; }
-
-        /* BUTTONS */
-        button { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; transition: opacity 0.2s; }
-        button:active { opacity: 0.7; }
+        button { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+        .btn-icon { padding: 8px; background: #f1f5f9; color: var(--zinc-800); font-size: 16px; min-width: 38px; }
         .btn-view { background: var(--primary); color: white; }
-        .btn-save { background: var(--zinc-800); color: white; }
-        .btn-del-outline { background: transparent; color: var(--zinc-500); border: 1px solid var(--border); }
+        .btn-del { background: var(--danger); color: white; }
 
-        input, textarea { font-size: 16px !important; padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
+        input, textarea { font-size: 16px !important; padding: 12px; border: 1px solid var(--zinc-200); border-radius: 10px; width: 100%; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; }
         
-        .pazienti-table { width: 100%; border-collapse: collapse; background: white; }
-        .pazienti-table th { background: var(--zinc-100); text-align: left; padding: 12px; font-size: 10px; color: var(--zinc-500); text-transform: uppercase; }
-        .pazienti-table td { padding: 12px; border-bottom: 1px solid #f1f1f1; }
+        .pazienti-table { width: 100%; border-collapse: collapse; }
+        .pazienti-table th { text-align: left; padding: 12px; font-size: 11px; color: var(--zinc-500); text-transform: uppercase; border-bottom: 2px solid var(--zinc-100); }
+        .pazienti-table td { padding: 10px 12px; border-bottom: 1px solid var(--zinc-100); }
 
-        .item-box { background: #f8fafc; border-radius: 4px; padding: 10px; margin-bottom: 8px; position: relative; border: 1px solid var(--border); }
-        .timeline-item { border-left: 2px solid var(--border); padding-left: 15px; margin-bottom: 15px; position: relative; }
-        .timeline-item::before { content: ''; position: absolute; left: -5px; top: 0; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
+        .piano-box { border: 1px solid var(--zinc-200); border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fff; }
+        .banner-diario { background: #f8fafc; border-top: 1px solid var(--zinc-200); border-radius: 0 0 12px 12px; padding: 15px; margin: 15px -15px -15px -15px; }
+        .nota-item { background: white; border-radius: 8px; padding: 10px; margin-top: 8px; border: 1px solid var(--zinc-200); }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box; backdrop-filter: blur(2px); }
-        .hidden { display: none; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
+        .hidden { display: none !important; }
 
-        /* MOBILE OPTIMIZATION */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             body { flex-direction: column; }
-            .sidebar { 
-                width: 100%; height: auto; position: sticky; top: 0; 
-                flex-direction: row; padding: 10px 0; justify-content: space-around;
-                padding-top: env(safe-area-inset-top);
-            }
-            .sidebar h2 { display: none; }
-            .nav-btn { width: auto; text-align: center; padding: 10px; font-size: 11px; }
-            .main-content { margin-left: 0; width: 100%; padding: 15px; }
+            .sidebar { width: 100%; height: auto; position: sticky; top: 0; flex-direction: row; padding: 5px 0; padding-top: env(safe-area-inset-top); }
+            .sidebar-header { display: none; }
+            .nav-btn { width: auto; padding: 10px; border-left: none; }
+            .nav-btn.active { border-bottom: 3px solid var(--primary); }
+            .main-content { margin-left: 0; padding: 15px; }
             .clinica-grid { grid-template-columns: 1fr; }
-            .pazienti-table th:first-child, .pazienti-table td:first-child { display: none; }
-            .modal { align-items: flex-end; padding: 0; }
-            .modal .card { border-radius: 15px 15px 0 0; max-width: 100%; }
         }
 
-        /* PRINT STYLE - Hidden during normal use */
-        #print-area { display: none; }
-        @media print { 
+        #print-section { display: none; }
+
+        @media print {
             body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { 
+                display: block !important; 
+                position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 0; margin: 0;
+            }
+            .sidebar, .nav-btn, button, .modal, .main-content { display: none !important; }
         }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>MEDPRO v16</h2>
-    <button class="nav-btn active" onclick="showSection('dashboard')" id="nav-dash">📋 In Cura</button>
-    <button class="nav-btn" onclick="showSection('archivio')" id="nav-arch">📂 Archivio</button>
-    <div style="margin-top: auto; padding: 10px;">
-        <button class="btn-view" style="width: 100%; background: var(--success);" onclick="apriModalPaziente(false)">+ NUOVO</button>
+<!-- SCHERMATA LOGIN -->
+<div id="login-screen">
+    <div class="card" style="width:100%; max-width:350px; padding: 25px;">
+        <h2 style="text-align:center; margin-top:0; color:var(--primary)">MEDPRO Login</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button class="btn-view" style="width:100%; margin-bottom: 10px;" onclick="handleLogin()">ACCEDI</button>
+        <button class="btn-view" style="width:100%; background: var(--zinc-500);" onclick="handleRegister()">REGISTRATI</button>
+        <p id="login-error" style="color:var(--danger); text-align:center; margin-top:10px; font-size:12px;"></p>
     </div>
 </div>
 
+<!-- APPLICATIVO PRINCIPALE (Nascosto di base finché non si è loggati) -->
+<div class="sidebar">
+    <div class="sidebar-header"><div class="logo-box">M</div><h2>MEDPRO</h2></div>
+    <button class="nav-btn active" onclick="showSection('dashboard')" id="nav-dash">📋 In Cura</button>
+    <button class="nav-btn" onclick="showSection('archivio')" id="nav-arch">📂 Archivio</button>
+    <button class="nav-btn" onclick="handleLogout()" style="margin-top:auto; color:var(--danger)">🚪 Esci</button>
+</div>
+
 <div class="main-content">
-    <!-- DASHBOARD -->
     <div id="section-dashboard">
-        <h1 style="font-size: 18px; margin-bottom: 20px;">Cartelle Attive</h1>
-        <div class="card" style="padding:0; overflow: hidden;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h1>Dashboard</h1>
+            <button class="btn-view" style="background: var(--success);" onclick="apriModalPaziente(false)">+ NUOVO</button>
+        </div>
+        <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
-                <thead><tr><th>Apertura</th><th>Nominativo</th><th>Azioni</th></tr></thead>
+                <thead><tr><th>Data</th><th>Nominativo</th><th>Azioni</th></tr></thead>
                 <tbody id="lista-attivi"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ARCHIVIO -->
     <div id="section-archivio" class="hidden">
-        <h1 style="font-size: 18px;">Archivio Storico</h1>
-        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca per nome o CF..." onkeyup="renderArchivio()">
-        <div class="card" style="padding:0; overflow: hidden;">
+        <h1>Archivio Storico</h1>
+        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente..." onkeyup="renderArchivio()">
+        <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
                 <thead><tr><th>Nominativo</th><th>Azioni</th></tr></thead>
                 <tbody id="lista-archiviati"></tbody>
@@ -132,323 +135,398 @@
         </div>
     </div>
 
-    <!-- CLINICA -->
     <div id="section-clinica" class="hidden">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <button onclick="showSection('dashboard')" class="btn-del-outline">← TORNA ALLA LISTA</button>
+        <div style="display:flex; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+            <button onclick="showSection('dashboard')" class="btn-del" style="background:var(--zinc-500)">← ESCI</button>
             <div style="display:flex; gap:8px;">
-                <button class="btn-view" style="background:var(--danger)" onclick="generaStampa()">📄 PDF / STAMPA</button>
-                <button class="btn-save" id="btnSalvaTutto" onclick="salvaEChiudi()">💾 SALVA</button>
+                <button id="btn-ripristina-clinica" class="btn-view hidden" style="background:var(--success)" onclick="toggleStato(curPz.id, true)">RIPRISTINA</button>
+                <button class="btn-view" style="background:var(--danger)" onclick="generaStampa()">📄 STAMPA</button>
+                <button class="btn-view" style="background:var(--zinc-800)" onclick="salvaEChiudi()">💾 SALVA</button>
             </div>
         </div>
-
-        <div class="card" style="border-left: 4px solid var(--zinc-800);">
-            <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items: center;">
                 <div>
-                    <h2 id="cli-nome" style="margin:0; font-size:19px; letter-spacing: -0.5px;">--</h2>
-                    <p id="cli-info" style="margin:6px 0; color:var(--zinc-500); font-size:11px; white-space: pre-line; line-height: 1.5;"></p>
+                    <h2 id="cli-nome" style="margin:0; font-size: 20px; display: inline-block;">--</h2>
+                    <button onclick="apriModalPaziente(true)" class="btn-icon">⚙️</button>
+                    <p id="cli-info" style="color:var(--zinc-500); white-space: pre-line; margin-top:5px; font-size:12px;"></p>
                 </div>
-                <button class="btn-del-outline" onclick="apriModalPaziente(true)">MODIFICA DATI</button>
             </div>
         </div>
-
         <div class="clinica-grid">
-            <!-- Colonna Diagnosi -->
             <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 style="margin:0; font-size:11px; color: var(--zinc-500); text-transform: uppercase;">Diagnosi Attive</h3>
-                    <button class="btn-view" style="padding:4px 10px" onclick="document.getElementById('modal-diagnosi').classList.remove('hidden')">+ AGGIUNGI</button>
-                </div>
+                <h3>Diagnosi</h3>
+                <button class="btn-view" style="width:100%; margin-bottom:15px;" onclick="document.getElementById('modal-diagnosi').classList.remove('hidden')">+ AGGIUNGI</button>
                 <div id="cli-lista-diag"></div>
             </div>
-
-            <!-- Colonna Focus Diario -->
             <div id="area-focus" class="hidden">
-                <div class="card" style="border-top: 3px solid var(--primary); min-height: 400px;">
-                    <h2 id="focus-titolo" style="font-size:15px; color:var(--primary); margin:0 0 20px 0; padding-bottom: 10px; border-bottom: 1px solid var(--zinc-100);">--</h2>
+                <div class="card" style="border-top: 4px solid var(--primary);">
+                    <h2 id="focus-titolo" style="margin-bottom:5px;">--</h2>
+                    <div id="focus-sintesi" style="background:var(--zinc-100); padding:10px; border-radius:8px; margin-bottom:20px; font-style:italic; color:var(--zinc-800); border-left: 3px solid var(--zinc-500);"></div>
                     
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong style="font-size:12px;">PIANO TERAPEUTICO</strong>
-                        <button class="btn-view" style="font-size:10px; padding:4px 8px;" onclick="document.getElementById('modal-piano').classList.remove('hidden')">+ NUOVO PIANO</button>
-                    </div>
-                    <div id="focus-piani" style="margin: 12px 0 25px 0;"></div>
-                    
-                    <strong style="font-size:12px;">DIARIO CLINICO</strong>
-                    <textarea id="in-nota" placeholder="Inserisci un aggiornamento oggi..." style="height:80px; margin-top:10px; font-size: 14px !important;"></textarea>
-                    <button class="btn-view" style="width:100%; padding: 12px;" onclick="aggiungiNota()">REGISTRA NOTA</button>
-                    
-                    <div id="focus-timeline" style="margin-top:25px;"></div>
+                    <button class="btn-view" style="margin-bottom:15px;" onclick="document.getElementById('modal-piano').classList.remove('hidden')">+ NUOVO PIANO</button>
+                    <div id="focus-imbuto"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<div id="print-section"></div>
+
 <!-- MODALS -->
 <div id="modal-pz" class="modal hidden">
     <div class="card" style="width:100%; max-width:400px;">
-        <h2 id="modal-pz-titolo" style="margin-top:0; font-size:16px;">Anagrafica Paziente</h2>
+        <h2>Anagrafica</h2>
         <input type="text" id="m-nome" placeholder="Nome e Cognome">
+        <input type="text" id="m-nascita" placeholder="Data Nascita (gg/mm/aaaa)">
+        <input type="text" id="m-via" placeholder="Indirizzo">
         <input type="text" id="m-cf" placeholder="Codice Fiscale">
-        <input type="text" id="m-tel" placeholder="Recapito Telefonico">
-        <input type="text" id="m-via" placeholder="Indirizzo Completo">
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn-view" style="flex:2" onclick="salvaAnagrafica()">CONFERMA</button>
-            <button class="btn-del-outline" style="flex:1" onclick="chiudiTutto()">ANNULLA</button>
-        </div>
+        <input type="text" id="m-tel" placeholder="Telefono">
+        <input type="email" id="m-email" placeholder="Email">
+        <button class="btn-view" style="width:100%" onclick="salvaAnagrafica()">SALVA</button>
+        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">CHIUDI</button>
     </div>
 </div>
 
 <div id="modal-diagnosi" class="modal hidden">
     <div class="card" style="width:100%; max-width:400px;">
-        <h3 style="margin-top:0;">Nuova Diagnosi</h3>
-        <input type="text" id="m-diag-nome" placeholder="Nome Patologia / Problema">
-        <label style="font-size:10px; color:var(--zinc-400);">DATA DIAGNOSI</label>
-        <input type="date" id="m-diag-data">
-        <textarea id="m-diag-sintesi" placeholder="Breve sintesi clinica..." style="height:100px"></textarea>
-        <button class="btn-view" style="width:100%" onclick="salvaDiagnosi()">AGGIUNGI DIAGNOSI</button>
-        <button class="btn-del-outline" style="width:100%; margin-top:10px;" onclick="chiudiTutto()">CHIUDI</button>
+        <h3>Nuova Diagnosi</h3>
+        <input type="text" id="m-diag-nome" placeholder="Patologia">
+        <input type="text" id="m-diag-data" placeholder="Data (gg/mm/aaaa)">
+        <textarea id="m-diag-sintesi" placeholder="Note..."></textarea>
+        <button class="btn-view" style="width:100%" onclick="salvaDiagnosi()">SALVA</button>
+        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">CHIUDI</button>
     </div>
 </div>
 
 <div id="modal-piano" class="modal hidden">
     <div class="card" style="width:100%; max-width:400px;">
-        <h3 style="margin-top:0;">Piano Terapeutico</h3>
-        <textarea id="m-piano-testo" style="height:150px;" placeholder="Descrivi il piano di cura o i farmaci..."></textarea>
-        <button class="btn-view" style="width:100%" onclick="salvaPiano()">SALVA PIANO</button>
-        <button class="btn-del-outline" style="width:100%; margin-top:10px;" onclick="chiudiTutto()">ANNULLA</button>
+        <h3>Nuovo Piano</h3>
+        <input type="text" id="m-piano-data" placeholder="Data (gg/mm/aaaa)">
+        <textarea id="m-piano-testo" placeholder="Dettagli..."></textarea>
+        <button class="btn-view" style="width:100%" onclick="salvaPiano()">CREA</button>
+        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">ANNULLA</button>
     </div>
 </div>
 
-<!-- AREA DI STAMPA INVISIBILE -->
-<div id="print-area"></div>
+<!-- SCRIPTS INTEGRATI FIREBASE (V10 MODULARE VIA CDN) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script>
-    let curPz = null; let curDiagIdx = null; let editMode = false;
+    // ---- CONFIGURAZIONE FIREBASE ----
+    // Sostituisci questi valori con quelli presi dalla tua console Firebase
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
 
-    function showSection(id) {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Variabili di stato globali nel modulo
+    let currentUser = null;
+    let elencoPazientiCache = [];
+    let curPz = null, curDiagIdx = null, editMode = false, openDiarioIdx = null;
+
+    // ---- FUNZIONI AUTH (Esposte a window per i trigger inline degli elementi HTML) ----
+    window.handleLogin = async () => {
+        const email = document.getElementById('login-email').value.trim();
+        const pass = document.getElementById('login-password').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (err) {
+            document.getElementById('login-error').innerText = "Errore: " + err.message;
+        }
+    };
+
+    window.handleRegister = async () => {
+        const email = document.getElementById('login-email').value.trim();
+        const pass = document.getElementById('login-password').value;
+        try {
+            await createUserWithEmailAndPassword(auth, email, pass);
+        } catch (err) {
+            document.getElementById('login-error').innerText = "Registrazione Fallita: " + err.message;
+        }
+    };
+
+    window.handleLogout = () => {
+        signOut(auth);
+    };
+
+    // Monitoraggio stato utente loggato
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('login-screen').classList.add('hidden');
+            await syncDatiDaFirebase();
+            showSection('dashboard');
+        } else {
+            currentUser = null;
+            elencoPazientiCache = [];
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+    });
+
+    // ---- DATA SYNC DATABASE ----
+    async function syncDatiDaFirebase() {
+        if (!currentUser) return;
+        const q = query(collection(db, "pazienti"), where("userId", "==", currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        elencoPazientiCache = [];
+        querySnapshot.forEach((doc) => {
+            elencoPazientiCache.push(doc.data());
+        });
+    }
+
+    async function salvaPazienteSuCloud(pazienteObj) {
+        if(!currentUser) return;
+        pazienteObj.userId = currentUser.uid; // Collega il dato all'utente loggato
+        await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
+        await syncDatiDaFirebase();
+    }
+
+    // ---- LOGICA APPLICATIVA ADATTATA DA LOCALSTORAGE A FIREBASE ----
+    window.chiudiTutto = () => { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
+
+    window.showSection = async (id) => {
         document.querySelectorAll('.main-content > div').forEach(s => s.classList.add('hidden'));
         document.getElementById('section-' + id).classList.remove('hidden');
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(id==='dashboard') { renderDashboard(); document.getElementById('nav-dash').classList.add('active'); }
-        if(id==='archivio') { renderArchivio(); document.getElementById('nav-arch').classList.add('active'); }
-        window.scrollTo(0,0);
+        if(id==='dashboard') renderDashboard();
+        if(id==='archivio') renderArchivio();
     }
 
-    function salvaAnagrafica() {
-        const n = document.getElementById('m-nome').value; if(!n) return;
-        const d = { nome: n, cf: document.getElementById('m-cf').value, tel: document.getElementById('m-tel').value, via: document.getElementById('m-via').value };
-        if(editMode) Object.assign(curPz, d);
-        else {
-            const id = "PZ-"+Date.now();
-            curPz = { id, ...d, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] };
+    window.salvaAnagrafica = async () => {
+        const nome = document.getElementById('m-nome').value.trim();
+        const cf = document.getElementById('m-cf').value.trim();
+        if(!nome || !cf) return alert("Nome e CF obbligatori.");
+        
+        let dati = { nome, cf, nascita: document.getElementById('m-nascita').value, via: document.getElementById('m-via').value, tel: document.getElementById('m-tel').value, email: document.getElementById('m-email').value };
+        
+        if(editMode) {
+            Object.assign(curPz, dati);
+        } else { 
+            const id = "PZ-" + Date.now(); 
+            curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
         }
-        localStorage.setItem(curPz.id, JSON.stringify(curPz));
-        chiudiTutto();
-        if(document.getElementById('section-clinica').classList.contains('hidden')) renderDashboard();
-        else apriClinica(curPz.id);
+        
+        await salvaPazienteSuCloud(curPz);
+        chiudiTutto(); 
+        renderDashboard();
     }
 
-    function renderDashboard() {
+    window.renderDashboard = () => {
         const tbody = document.getElementById('lista-attivi'); tbody.innerHTML = "";
-        const keys = Object.keys(localStorage).filter(k => k.startsWith("PZ-")).sort().reverse();
-        keys.forEach(k => {
-            const p = JSON.parse(localStorage.getItem(k));
-            if(p.stato === 'attivo') {
-                tbody.innerHTML += `<tr>
-                    <td>${p.dataApertura}</td>
-                    <td><strong>${p.nome}</strong><br><small style="color:var(--zinc-400)">${p.cf}</small></td>
-                    <td>
-                        <button class="btn-view" onclick="apriClinica('${p.id}')">VISITA</button>
-                        <button class="btn-del-outline" onclick="toggleStato('${p.id}')">ARCHIVIA</button>
-                    </td>
-                </tr>`;
-            }
+        elencoPazientiCache.filter(p => p.stato === 'attivo').forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${p.dataApertura}</td><td><strong>${p.nome}</strong></td>
+            <td><button class="btn-icon" id="view-${p.id}">👁️</button>
+            <button class="btn-icon" id="tog-${p.id}">📂</button></td>`;
+            tbody.appendChild(tr);
+
+            document.getElementById(`view-${p.id}`).onclick = () => apriClinica(p.id);
+            document.getElementById(`tog-${p.id}`).onclick = () => toggleStato(p.id);
         });
     }
 
-    function renderArchivio() {
+    window.renderArchivio = () => {
         const q = document.getElementById('cercaArchivio').value.toLowerCase();
         const tbody = document.getElementById('lista-archiviati'); tbody.innerHTML = "";
-        Object.keys(localStorage).filter(k => k.startsWith("PZ-")).forEach(k => {
-            const p = JSON.parse(localStorage.getItem(k));
-            if(p.stato === 'archiviato' && p.nome.toLowerCase().includes(q)) {
-                tbody.innerHTML += `<tr>
-                    <td><strong>${p.nome}</strong></td>
-                    <td>
-                        <button class="btn-view" onclick="apriClinica('${p.id}')">VEDI</button>
-                        <button class="btn-view" style="background:var(--success)" onclick="toggleStato('${p.id}')">RIPRISTINA</button>
-                        <button class="btn-del-outline" style="color:var(--danger)" onclick="eliminaDefinitivo('${p.id}')">ELIMINA</button>
-                    </td>
-                </tr>`;
-            }
+        elencoPazientiCache.filter(p => p.stato === 'archiviato' && p.nome.toLowerCase().includes(q)).forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><strong>${p.nome}</strong></td>
+            <td><button class="btn-icon" id="archview-${p.id}">👁️</button>
+            <button class="btn-icon" id="archi-tog-${p.id}">🔄</button>
+            <button class="btn-icon" style="color:var(--danger)" id="del-${p.id}">🗑️</button></td>`;
+            tbody.appendChild(tr);
+
+            document.getElementById(`archview-${p.id}`).onclick = () => apriClinica(p.id);
+            document.getElementById(`archi-tog-${p.id}`).onclick = () => toggleStato(p.id);
+            document.getElementById(`del-${p.id}`).onclick = () => eliminaDefinitivo(p.id);
         });
     }
 
-    function toggleStato(id) {
-        let p = JSON.parse(localStorage.getItem(id));
+    window.toggleStato = async (id, forceOpen=false) => {
+        let p = elencoPazientiCache.find(x => x.id === id);
         p.stato = (p.stato === 'attivo' ? 'archiviato' : 'attivo');
-        localStorage.setItem(id, JSON.stringify(p));
-        renderDashboard(); renderArchivio();
+        await salvaPazienteSuCloud(p);
+        forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    function eliminaDefinitivo(id) {
-        if(confirm("Attenzione: l'eliminazione è definitiva. Procedere?")) {
-            localStorage.removeItem(id);
-            renderArchivio();
-        }
+    window.eliminaDefinitivo = async (id) => {
+        if(confirm("Cancellare definitivamente dal cloud?")) { 
+            await deleteDoc(doc(db, "pazienti", id));
+            await syncDatiDaFirebase();
+            renderArchivio(); 
+        } 
     }
 
-    function apriClinica(id) {
-        curPz = JSON.parse(localStorage.getItem(id));
+    window.apriClinica = (id) => {
+        curPz = elencoPazientiCache.find(x => x.id === id); 
         showSection('clinica');
         document.getElementById('cli-nome').innerText = curPz.nome;
-        document.getElementById('cli-info').innerText = `Codice Fiscale: ${curPz.cf}\nContatto: ${curPz.tel}\nIndirizzo: ${curPz.via}`;
-        document.getElementById('area-focus').classList.add('hidden');
-        curDiagIdx = null;
+        document.getElementById('cli-info').innerText = `Nascita: ${curPz.nascita}\nCF: ${curPz.cf}\nTel: ${curPz.tel}`;
+        document.getElementById('btn-ripristina-clinica').className = curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
+        document.getElementById('area-focus').classList.add('hidden'); 
         renderDiagnosi();
     }
 
-    function salvaDiagnosi() {
-        const n = document.getElementById('m-diag-nome').value; if(!n) return;
+    window.salvaDiagnosi = async () => {
         curPz.diagnosi.push({ 
-            nome: n, 
+            nome: document.getElementById('m-diag-nome').value, 
             data: document.getElementById('m-diag-data').value || '--', 
-            sintesi: document.getElementById('m-diag-sintesi').value || '',
-            piani: [], diario: [] 
+            sintesi: document.getElementById('m-diag-sintesi').value, 
+            piani: [] 
         });
-        localStorage.setItem(curPz.id, JSON.stringify(curPz));
-        chiudiTutto(); renderDiagnosi();
+        await salvaPazienteSuCloud(curPz);
+        
+        document.getElementById('m-diag-nome').value = "";
+        document.getElementById('m-diag-data').value = "";
+        document.getElementById('m-diag-sintesi').value = "";
+        chiudiTutto(); 
+        renderDiagnosi();
     }
 
-    function renderDiagnosi() {
+    window.renderDiagnosi = () => {
         const cont = document.getElementById('cli-lista-diag'); cont.innerHTML = "";
         curPz.diagnosi.forEach((d, i) => {
-            const div = document.createElement('div');
-            div.className = `diag-item ${curDiagIdx === i ? 'active' : ''}`;
-            div.innerHTML = `
-                <div class="diag-content">
-                    <strong>${d.nome}</strong>
-                    <div style="font-size:9px; color:var(--primary); margin-top:2px;">DATA: ${d.data}</div>
-                    <div class="diag-sintesi">${d.sintesi}</div>
-                </div>
-                <span style="color:var(--zinc-400); margin-left:10px;">›</span>`;
-            div.onclick = () => apriFocus(i);
-            cont.appendChild(div);
+            const row = document.createElement('div');
+            row.className = `diag-item ${curDiagIdx===i?'active':''}`;
+            row.innerHTML = `<div style="flex:1;" id="focus-click-${i}"><strong>${d.nome}</strong><br><small>${d.data}</small></div>
+            <button id="del-diag-${i}" style="background:none; border:none; font-size:20px;">&times;</button>`;
+            cont.appendChild(row);
+
+            document.getElementById(`focus-click-${i}`).onclick = () => apriFocus(i);
+            document.getElementById(`del-diag-${i}`).onclick = () => eliminaDiagnosi(i);
         });
     }
 
-    function apriFocus(idx) {
-        curDiagIdx = idx;
+    window.eliminaDiagnosi = async (idx) => { if(confirm("Eliminare diagnosi?")) { curPz.diagnosi.splice(idx, 1); await salvaEChiudi(true); } }
+
+    window.apriFocus = (idx) => {
+        curDiagIdx = idx; 
         document.getElementById('area-focus').classList.remove('hidden');
-        document.getElementById('focus-titolo').innerText = "DETTAGLI: " + curPz.diagnosi[idx].nome;
-        renderDiagnosi(); renderPiani(); renderTimeline();
-        if(window.innerWidth < 768) {
-            setTimeout(() => { document.getElementById('area-focus').scrollIntoView({behavior: "smooth"}); }, 100);
-        }
+        const diag = curPz.diagnosi[idx];
+        document.getElementById('focus-titolo').innerText = diag.nome;
+        
+        const sBox = document.getElementById('focus-sintesi');
+        sBox.innerText = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota per questa diagnosi.";
+        renderImbuto();
     }
 
-    function salvaPiano() {
-        const t = document.getElementById('m-piano-testo').value; if(!t) return;
-        curPz.diagnosi[curDiagIdx].piani.unshift({ data: new Date().toLocaleDateString(), testo: t });
-        localStorage.setItem(curPz.id, JSON.stringify(curPz));
-        chiudiTutto(); renderPiani();
+    window.salvaPiano = async () => {
+        curPz.diagnosi[curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
+        await salvaPazienteSuCloud(curPz); 
+        chiudiTutto(); 
+        renderImbuto();
     }
 
-    function renderPiani() {
-        const cont = document.getElementById('focus-piani'); cont.innerHTML = "";
-        curPz.diagnosi[curDiagIdx].piani.forEach((p, i) => {
-            cont.innerHTML += `<div class="item-box">
-                <button onclick="eliminaPiano(${i})" style="position:absolute; right:5px; top:5px; background:none; color:#ccc; font-size:14px;">×</button>
-                <strong style="font-size:10px; color:var(--zinc-500)">${p.data}</strong><br>${p.testo}
-            </div>`;
+    window.toggleDiarioBanner = (pIdx) => { openDiarioIdx = (openDiarioIdx === pIdx) ? null : pIdx; renderImbuto(); }
+
+    window.renderImbuto = () => {
+        const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
+        curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
+            const isDiarioOpen = openDiarioIdx === pIdx;
+            let html = `<div class="piano-box">
+                <button id="del-piano-${pIdx}" style="float:right; background:none; border:none;">&times;</button>
+                <strong>PIANO DEL: ${p.data}</strong><p style="margin:8px 0;">${p.testo}</p>
+                <button id="tog-dia-${pIdx}" class="btn-view" style="background:${isDiarioOpen?'var(--zinc-800)':'var(--primary)'}">${isDiarioOpen ? 'CHIUDI' : '📋 DIARIO'}</button>
+                <div class="banner-diario ${isDiarioOpen ? '' : 'hidden'}">
+                    <div style="display:flex; gap:8px; flex-direction:column;">
+                        <input type="text" id="date-nota-${pIdx}" placeholder="Data (gg/mm/aaaa)">
+                        <textarea id="in-nota-${pIdx}" placeholder="Nota..."></textarea>
+                        <button id="add-nota-${pIdx}" class="btn-view" style="background:var(--success)">OK</button>
+                    </div>
+                    <div id="diario-list-${pIdx}">`;
+            p.diario.forEach((n, nIdx) => {
+                html += `<div class="nota-item"><button id="del-nota-${pIdx}-${nIdx}" style="float:right; background:none; border:none;">&times;</button>
+                <small><strong>${n.data}</strong></small><br>${n.testo}</div>`;
+            });
+            html += `</div></div></div>`;
+            
+            const wrap = document.createElement('div');
+            wrap.innerHTML = html;
+            cont.appendChild(wrap);
+
+            document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
+            document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
+            if(isDiarioOpen){
+                document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
+                p.diario.forEach((n, nIdx) => {
+                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = () => eliminaNota(pIdx, nIdx);
+                });
+            }
         });
     }
 
-    function eliminaPiano(i) { curPz.diagnosi[curDiagIdx].piani.splice(i, 1); renderPiani(); }
-
-    function aggiungiNota() {
-        const t = document.getElementById('in-nota').value; if(!t) return;
-        curPz.diagnosi[curDiagIdx].diario.unshift({ data: new Date().toLocaleString(), testo: t });
-        document.getElementById('in-nota').value = "";
-        renderTimeline();
+    window.aggiungiNota = async (pIdx) => {
+        const t = document.getElementById('in-nota-' + pIdx).value;
+        const d = document.getElementById('date-nota-' + pIdx).value || '--';
+        if(!t) return; 
+        curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
+        await salvaPazienteSuCloud(curPz); 
+        renderImbuto();
     }
 
-    function renderTimeline() {
-        const cont = document.getElementById('focus-timeline'); cont.innerHTML = "";
-        curPz.diagnosi[curDiagIdx].diario.forEach((n, i) => {
-            cont.innerHTML += `<div class="timeline-item">
-                <button onclick="eliminaNota(${i})" style="position:absolute; right:0; top:0; background:none; color:#ccc;">×</button>
-                <small style="color:var(--primary); font-weight:bold; font-size:10px;">${n.data}</small><br>
-                <div style="margin-top:4px;">${n.testo}</div>
-            </div>`;
-        });
-    }
-
-    function eliminaNota(i) { curPz.diagnosi[curDiagIdx].diario.splice(i, 1); renderTimeline(); }
-
-    function chiudiTutto() { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
+    window.eliminaPiano = async (idx) => { if(confirm("Eliminare piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    window.eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
     
-    function salvaEChiudi() { 
-        localStorage.setItem(curPz.id, JSON.stringify(curPz));
-        const btn = document.getElementById('btnSalvaTutto');
-        btn.innerText = "✅ SALVATO";
-        setTimeout(() => { btn.innerText = "💾 SALVA"; showSection('dashboard'); }, 600);
+    window.salvaEChiudi = async (keep=false) => { 
+        await salvaPazienteSuCloud(curPz); 
+        if(!keep) showSection('dashboard'); else renderDiagnosi(); 
     }
-
-    function apriModalPaziente(edit) {
+    
+    window.apriModalPaziente = (edit) => {
         editMode = edit;
-        document.getElementById('modal-pz-titolo').innerText = edit ? "Modifica Cartella" : "Nuova Cartella Clinica";
-        if(!edit) ['m-nome','m-cf','m-tel','m-via'].forEach(id => document.getElementById(id).value="");
-        else {
-            document.getElementById('m-nome').value = curPz.nome;
-            document.getElementById('m-cf').value = curPz.cf;
-            document.getElementById('m-tel').value = curPz.tel;
-            document.getElementById('m-via').value = curPz.via;
-        }
+        if(edit) {
+            document.getElementById('m-nome').value = curPz.nome; document.getElementById('m-cf').value = curPz.cf;
+            document.getElementById('m-nascita').value = curPz.nascita; document.getElementById('m-via').value = curPz.via;
+            document.getElementById('m-tel').value = curPz.tel; document.getElementById('m-email').value = curPz.email;
+        } else { ['m-nome','m-nascita','m-via','m-cf','m-tel','m-email'].forEach(id => document.getElementById(id).value=""); }
         document.getElementById('modal-pz').classList.remove('hidden');
     }
 
-    // FUNZIONE STAMPA OTTIMIZZATA
-    function generaStampa() {
-        const printArea = document.getElementById('print-area');
-        let content = `
-            <div style="padding:40px; font-family: sans-serif; color:#333;">
-                <div style="text-align:right; color:#888; font-size:12px;">MEDPRO v16.1 - Report Clinico</div>
-                <h1 style="border-bottom: 2px solid #2563eb; padding-bottom:10px;">${curPz.nome}</h1>
-                <p><strong>CF:</strong> ${curPz.cf} | <strong>Tel:</strong> ${curPz.tel}</p>
-                <p><strong>Indirizzo:</strong> ${curPz.via}</p>
-                <hr style="border:none; border-top: 1px solid #eee; margin:20px 0;">
-        `;
+    window.generaStampa = () => {
+        if(!curPz) return;
+        const printSection = document.getElementById('print-section');
+        let html = `<div style="font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff;">
+            <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 30px;">
+                <h1 style="margin:0; text-transform: uppercase;">Cartella Clinica</h1>
+                <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.1 | Report del ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
+                <div><strong>Paziente:</strong> ${curPz.nome}<br><strong>Data Nascita:</strong> ${curPz.nascita || '--'}<br><strong>CF:</strong> ${curPz.cf || '--'}</div>
+                <div><strong>Telefono:</strong> ${curPz.tel || '--'}<br><strong>Email:</strong> ${curPz.email || '--'}<br><strong>Indirizzo:</strong> ${curPz.via || '--'}</div>
+            </div>`;
 
-        curPz.diagnosi.forEach(d => {
-            content += `
-                <div style="margin-bottom:30px; page-break-inside: avoid;">
-                    <h2 style="background:#f4f4f5; padding:8px; font-size:18px;">Patologia: ${d.nome}</h2>
-                    <p><em>Diagnosi del: ${d.data}</em></p>
-                    <p><strong>Sintesi:</strong> ${d.sintesi}</p>
-                    
-                    <h3>Piani Terapeutici:</h3>
-                    ${d.piani.length ? d.piani.map(p => `<div style="margin-bottom:8px;"><strong>${p.data}:</strong> ${p.testo}</div>`).join('') : 'Nessun piano registrato.'}
-                    
-                    <h3>Diario Clinico:</h3>
-                    ${d.diario.length ? d.diario.map(n => `<div style="border-left:2px solid #2563eb; padding-left:10px; margin-bottom:10px;"><strong>${n.data}:</strong><br>${n.testo}</div>`).join('') : 'Nessuna nota presente.'}
-                </div>
-            `;
-        });
-
-        content += `</div>`;
-        printArea.innerHTML = content;
-        
-        // Esegue la stampa nativa del sistema
-        window.print();
-        
-        // Pulisce l'area dopo la stampa per non lasciare residui visibili
-        setTimeout(() => { printArea.innerHTML = ""; }, 1000);
+        if (curPz.diagnosi) {
+            curPz.diagnosi.forEach(d => {
+                html += `<div style="margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                    <div style="background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px;">PATOLOGIA: ${d.nome} (${d.data})</div>
+                    <p><strong>Note Diagnosi:</strong> ${d.sintesi || '--'}</p>`;
+                if (d.piani) d.piani.forEach(p => {
+                    html += `<div style="margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px;">
+                        <div style="font-weight: bold; text-decoration: underline;">Piano Terapeutico del ${p.data}</div>
+                        <p style="margin: 5px 0;">${p.testo}</p>`;
+                    if (p.diario) p.diario.forEach(n => {
+                        html += `<div style="font-size: 12px; margin-top: 5px; border-top: 1px solid #f1f1f1;"><strong>${n.data}:</strong> ${n.testo}</div>`;
+                    });
+                    html += `</div>`;
+                });
+                html += `</div>`;
+            });
+        }
+        printSection.innerHTML = html + `</div>`;
+        setTimeout(() => { window.print(); }, 300);
     }
-
-    window.onload = () => renderDashboard();
 </script>
-
 </body>
 </html>
