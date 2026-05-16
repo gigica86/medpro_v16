@@ -213,10 +213,10 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // ---- CONFIGURAZIONE FIREBASE ----
-    // Incolla qui l'oggetto del tuo SDK copiato dalla console di Firebase
+    // Sostituisci questo oggetto con i parametri reali estratti dalla tua console Firebase
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_AUTH_DOMAIN",
@@ -232,22 +232,35 @@
 
     let currentUser = null;
     let elencoPazientiCache = [];
-    let curPz = null, curDiagIdx = null, editMode = false, openDiarioIdx = null;
+    
+    window.curPz = null;
+    window.curDiagIdx = null;
+    window.editMode = false;
+    window.openDiarioIdx = null;
 
-    // ---- FUNZIONI AUTH (Con alert specifico per iPad in caso di errore) ----
+    // ---- FUNZIONI AUTH ----
     window.handleLogin = async () => {
-        const email = document.getElementById('login-email').value.trim();
-        const pass = document.getElementById('login-password').value;
+        const emailEl = document.getElementById('login-email');
+        const passEl = document.getElementById('login-password');
+        
+        if (!emailEl || !passEl) return alert("Errore dell'interfaccia nel DOM.");
+
+        const email = emailEl.value.trim();
+        const pass = passEl.value;
+
+        if (!email || !pass) return alert("Per favore, inserisci sia l'email che la password.");
+
         try {
+            document.getElementById('login-error').innerText = "Verifica credenziali...";
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err) {
-            alert("Errore Firebase: " + err.message);
+            alert("Impossibile accedere:\n" + err.message);
             document.getElementById('login-error').innerText = "Accesso fallito. Verifica le credenziali.";
         }
     };
 
     window.handleLogout = () => {
-        signOut(auth);
+        signOut(auth).catch((err) => alert("Errore logout: " + err.message));
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -255,7 +268,7 @@
             currentUser = user;
             document.getElementById('login-screen').classList.add('hidden');
             await syncDatiDaFirebase();
-            showSection('dashboard');
+            window.showSection('dashboard');
         } else {
             currentUser = null;
             elencoPazientiCache = [];
@@ -274,7 +287,7 @@
                 elencoPazientiCache.push(doc.data());
             });
         } catch(e) {
-            alert("Errore nel caricamento dei dati: " + e.message);
+            alert("Errore Firestore:\n" + e.message + "\n\nVerifica di aver attivato Firestore Database e configurato le Regole nella console.");
         }
     }
 
@@ -290,29 +303,31 @@
 
     window.showSection = async (id) => {
         document.querySelectorAll('.main-content > div').forEach(s => s.classList.add('hidden'));
-        document.getElementById('section-' + id).classList.remove('hidden');
+        const section = document.getElementById('section-' + id);
+        if (section) section.classList.remove('hidden');
+        
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(id==='dashboard') renderDashboard();
-        if(id==='archivio') renderArchivio();
+        if(id==='dashboard') window.renderDashboard();
+        if(id==='archivio') window.renderArchivio();
     }
 
     window.salvaAnagrafica = async () => {
         const nome = document.getElementById('m-nome').value.trim();
         const cf = document.getElementById('m-cf').value.trim();
-        if(!nome || !cf) return alert("Nome e CF obbligatori.");
+        if(!nome || !cf) return alert("Nome e Codice Fiscale sono obbligatori.");
         
         let dati = { nome, cf, nascita: document.getElementById('m-nascita').value, via: document.getElementById('m-via').value, tel: document.getElementById('m-tel').value, email: document.getElementById('m-email').value };
         
-        if(editMode) {
-            Object.assign(curPz, dati);
+        if(window.editMode) {
+            Object.assign(window.curPz, dati);
         } else { 
             const id = "PZ-" + Date.now(); 
-            curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
+            window.curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
         }
         
-        await salvaPazienteSuCloud(curPz);
-        chiudiTutto(); 
-        renderDashboard();
+        await salvaPazienteSuCloud(window.curPz);
+        window.chiudiTutto(); 
+        window.renderDashboard();
     }
 
     window.renderDashboard = () => {
@@ -324,8 +339,8 @@
             <button class="btn-icon" id="tog-${p.id}">📂</button></td>`;
             tbody.appendChild(tr);
 
-            document.getElementById(`view-${p.id}`).onclick = () => apriClinica(p.id);
-            document.getElementById(`tog-${p.id}`).onclick = () => toggleStato(p.id);
+            document.getElementById(`view-${p.id}`).onclick = () => window.apriClinica(p.id);
+            document.getElementById(`tog-${p.id}`).onclick = () => window.toggleStato(p.id);
         });
     }
 
@@ -340,9 +355,9 @@
             <button class="btn-icon" style="color:var(--danger)" id="del-${p.id}">🗑️</button></td>`;
             tbody.appendChild(tr);
 
-            document.getElementById(`archview-${p.id}`).onclick = () => apriClinica(p.id);
-            document.getElementById(`archi-tog-${p.id}`).onclick = () => toggleStato(p.id);
-            document.getElementById(`del-${p.id}`).onclick = () => eliminaDefinitivo(p.id);
+            document.getElementById(`archview-${p.id}`).onclick = () => window.apriClinica(p.id);
+            document.getElementById(`archi-tog-${p.id}`).onclick = () => window.toggleStato(p.id);
+            document.getElementById(`del-${p.id}`).onclick = () => window.eliminaDefinitivo(p.id);
         });
     }
 
@@ -350,83 +365,83 @@
         let p = elencoPazientiCache.find(x => x.id === id);
         p.stato = (p.stato === 'attivo' ? 'archiviato' : 'attivo');
         await salvaPazienteSuCloud(p);
-        forceOpen ? apriClinica(id) : showSection('dashboard');
+        forceOpen ? window.apriClinica(id) : window.showSection('dashboard');
     }
 
     window.eliminaDefinitivo = async (id) => {
-        if(confirm("Cancellare definitivamente dal cloud?")) { 
+        if(confirm("Cancellare definitivamente questo record dal Cloud?")) { 
             await deleteDoc(doc(db, "pazienti", id));
             await syncDatiDaFirebase();
-            renderArchivio(); 
+            window.renderArchivio(); 
         } 
     }
 
     window.apriClinica = (id) => {
-        curPz = elencoPazientiCache.find(x => x.id === id); 
-        showSection('clinica');
-        document.getElementById('cli-nome').innerText = curPz.nome;
-        document.getElementById('cli-info').innerText = `Nascita: ${curPz.nascita}\nCF: ${curPz.cf}\nTel: ${curPz.tel}`;
-        document.getElementById('btn-ripristina-clinica').className = curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
+        window.curPz = elencoPazientiCache.find(x => x.id === id); 
+        window.showSection('clinica');
+        document.getElementById('cli-nome').innerText = window.curPz.nome;
+        document.getElementById('cli-info').innerText = `Nascita: ${window.curPz.nascita}\nCF: ${window.curPz.cf}\nTel: ${window.curPz.tel}`;
+        document.getElementById('btn-ripristina-clinica').className = window.curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
         document.getElementById('area-focus').classList.add('hidden'); 
-        renderDiagnosi();
+        window.renderDiagnosi();
     }
 
     window.salvaDiagnosi = async () => {
-        curPz.diagnosi.push({ 
+        window.curPz.diagnosi.push({ 
             nome: document.getElementById('m-diag-nome').value, 
             data: document.getElementById('m-diag-data').value || '--', 
             sintesi: document.getElementById('m-diag-sintesi').value, 
             piani: [] 
         });
-        await salvaPazienteSuCloud(curPz);
+        await salvaPazienteSuCloud(window.curPz);
         
         document.getElementById('m-diag-nome').value = "";
         document.getElementById('m-diag-data').value = "";
         document.getElementById('m-diag-sintesi').value = "";
-        chiudiTutto(); 
-        renderDiagnosi();
+        window.chiudiTutto(); 
+        window.renderDiagnosi();
     }
 
     window.renderDiagnosi = () => {
         const cont = document.getElementById('cli-lista-diag'); cont.innerHTML = "";
-        curPz.diagnosi.forEach((d, i) => {
+        window.curPz.diagnosi.forEach((d, i) => {
             const row = document.createElement('div');
-            row.className = `diag-item ${curDiagIdx===i?'active':''}`;
+            row.className = `diag-item ${window.curDiagIdx===i?'active':''}`;
             row.innerHTML = `<div style="flex:1;" id="focus-click-${i}"><strong>${d.nome}</strong><br><small>${d.data}</small></div>
             <button id="del-diag-${i}" style="background:none; border:none; font-size:20px;">&times;</button>`;
             cont.appendChild(row);
 
-            document.getElementById(`focus-click-${i}`).onclick = () => apriFocus(i);
-            document.getElementById(`del-diag-${i}`).onclick = () => eliminaDiagnosi(i);
+            document.getElementById(`focus-click-${i}`).onclick = () => window.apriFocus(i);
+            document.getElementById(`del-diag-${i}`).onclick = () => window.eliminaDiagnosi(i);
         });
     }
 
-    window.eliminaDiagnosi = async (idx) => { if(confirm("Eliminare diagnosi?")) { curPz.diagnosi.splice(idx, 1); await salvaEChiudi(true); } }
+    window.eliminaDiagnosi = async (idx) => { if(confirm("Eliminare questa diagnosi?")) { window.curPz.diagnosi.splice(idx, 1); await window.salvaEChiudi(true); } }
 
     window.apriFocus = (idx) => {
-        curDiagIdx = idx; 
+        window.curDiagIdx = idx; 
         document.getElementById('area-focus').classList.remove('hidden');
-        const diag = curPz.diagnosi[idx];
+        const diag = window.curPz.diagnosi[idx];
         document.getElementById('focus-titolo').innerText = diag.nome;
         
         const sBox = document.getElementById('focus-sintesi');
-        sBox.innerText = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota per questa diagnosi.";
-        renderImbuto();
+        sBox.innerText = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita per questa diagnosi.";
+        window.renderImbuto();
     }
 
     window.salvaPiano = async () => {
-        curPz.diagnosi[curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
-        await salvaPazienteSuCloud(curPz); 
-        chiudiTutto(); 
-        renderImbuto();
+        window.curPz.diagnosi[window.curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
+        await salvaPazienteSuCloud(window.curPz); 
+        window.chiudiTutto(); 
+        window.renderImbuto();
     }
 
-    window.toggleDiarioBanner = (pIdx) => { openDiarioIdx = (openDiarioIdx === pIdx) ? null : pIdx; renderImbuto(); }
+    window.toggleDiarioBanner = (pIdx) => { window.openDiarioIdx = (window.openDiarioIdx === pIdx) ? null : pIdx; window.renderImbuto(); }
 
     window.renderImbuto = () => {
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
-        curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
-            const isDiarioOpen = openDiarioIdx === pIdx;
+        window.curPz.diagnosi[window.curDiagIdx].piani.forEach((p, pIdx) => {
+            const isDiarioOpen = window.openDiarioIdx === pIdx;
             let html = `<div class="piano-box">
                 <button id="del-piano-${pIdx}" style="float:right; background:none; border:none;">&times;</button>
                 <strong>PIANO DEL: ${p.data}</strong><p style="margin:8px 0;">${p.testo}</p>
@@ -448,12 +463,12 @@
             wrap.innerHTML = html;
             cont.appendChild(wrap);
 
-            document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
-            document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
+            document.getElementById(`del-piano-${pIdx}`).onclick = () => window.eliminaPiano(pIdx);
+            document.getElementById(`tog-dia-${pIdx}`).onclick = () => window.toggleDiarioBanner(pIdx);
             if(isDiarioOpen){
-                document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
+                document.getElementById(`add-nota-${pIdx}`).onclick = () => window.aggiungiNota(pIdx);
                 p.diario.forEach((n, nIdx) => {
-                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = () => eliminaNota(pIdx, nIdx);
+                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = () => window.eliminaNota(pIdx, nIdx);
                 });
             }
         });
@@ -463,31 +478,31 @@
         const t = document.getElementById('in-nota-' + pIdx).value;
         const d = document.getElementById('date-nota-' + pIdx).value || '--';
         if(!t) return; 
-        curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
-        await salvaPazienteSuCloud(curPz); 
-        renderImbuto();
+        window.curPz.diagnosi[window.curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
+        await salvaPazienteSuCloud(window.curPz); 
+        window.renderImbuto();
     }
 
-    window.eliminaPiano = async (idx) => { if(confirm("Eliminare piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
-    window.eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    window.eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano terapeutico?")) { window.curPz.diagnosi[window.curDiagIdx].piani.splice(idx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
+    window.eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota dal diario?")) { window.curPz.diagnosi[window.curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
     
     window.salvaEChiudi = async (keep=false) => { 
-        await salvaPazienteSuCloud(curPz); 
-        if(!keep) showSection('dashboard'); else renderDiagnosi(); 
+        await salvaPazienteSuCloud(window.curPz); 
+        if(!keep) window.showSection('dashboard'); else window.renderDiagnosi(); 
     }
     
     window.apriModalPaziente = (edit) => {
-        editMode = edit;
+        window.editMode = edit;
         if(edit) {
-            document.getElementById('m-nome').value = curPz.nome; document.getElementById('m-cf').value = curPz.cf;
-            document.getElementById('m-nascita').value = curPz.nascita; document.getElementById('m-via').value = curPz.via;
-            document.getElementById('m-tel').value = curPz.tel; document.getElementById('m-email').value = curPz.email;
+            document.getElementById('m-nome').value = window.curPz.nome; document.getElementById('m-cf').value = window.curPz.cf;
+            document.getElementById('m-nascita').value = window.curPz.nascita; document.getElementById('m-via').value = window.curPz.via;
+            document.getElementById('m-tel').value = window.curPz.tel; document.getElementById('m-email').value = window.curPz.email;
         } else { ['m-nome','m-nascita','m-via','m-cf','m-tel','m-email'].forEach(id => document.getElementById(id).value=""); }
         document.getElementById('modal-pz').classList.remove('hidden');
     }
 
     window.generaStampa = () => {
-        if(!curPz) return;
+        if(!window.curPz) return;
         const printSection = document.getElementById('print-section');
         let html = `<div style="font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff;">
             <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 30px;">
@@ -495,12 +510,12 @@
                 <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.1 | Report del ${new Date().toLocaleDateString()}</p>
             </div>
             <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
-                <div><strong>Paziente:</strong> ${curPz.nome}<br><strong>Data Nascita:</strong> ${curPz.nascita || '--'}<br><strong>CF:</strong> ${curPz.cf || '--'}</div>
-                <div><strong>Telefono:</strong> ${curPz.tel || '--'}<br><strong>Email:</strong> ${curPz.email || '--'}<br><strong>Indirizzo:</strong> ${curPz.via || '--'}</div>
+                <div><strong>Paziente:</strong> ${window.curPz.nome}<br><strong>Data Nascita:</strong> ${window.curPz.nascita || '--'}<br><strong>CF:</strong> ${window.curPz.cf || '--'}</div>
+                <div><strong>Telefono:</strong> ${window.curPz.tel || '--'}<br><strong>Email:</strong> ${window.curPz.email || '--'}<br><strong>Indirizzo:</strong> ${window.curPz.via || '--'}</div>
             </div>`;
 
-        if (curPz.diagnosi) {
-            curPz.diagnosi.forEach(d => {
+        if (window.curPz.diagnosi) {
+            window.curPz.diagnosi.forEach(d => {
                 html += `<div style="margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px;">
                     <div style="background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px;">PATOLOGIA: ${d.nome} (${d.data})</div>
                     <p><strong>Note Diagnosi:</strong> ${d.sintesi || '--'}</p>`;
