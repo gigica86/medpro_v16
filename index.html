@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.4 | Clinical Management</title>
+    <title>MEDPRO v16.5 | Clinical Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -36,7 +36,6 @@
         .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
         .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        /* HEADER SUPERIORE PER IDENTITÀ UTENTE */
         .top-navbar {
             position: fixed; top: 0; left: 220px; right: 0; height: 60px;
             background: white; border-bottom: 1px solid var(--zinc-200);
@@ -139,7 +138,7 @@
 
     <div id="section-archivio" class="hidden">
         <h1>Archivio Storico</h1>
-        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente..." onkeyup="renderArchivio()">
+        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente...">
         <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
                 <thead><tr><th>Nominativo</th><th>Azioni</th></tr></thead>
@@ -297,7 +296,6 @@
             currentUser = user;
             document.getElementById('login-screen').classList.add('hidden');
             
-            // Aggiorna l'interfaccia utente loggato in alto a destra
             const userDisplay = document.getElementById('user-display');
             const userEmailText = document.getElementById('user-email-text');
             const userAvatarLetter = document.getElementById('user-avatar-letter');
@@ -592,7 +590,7 @@
         renderImbuto();
     }
 
-    const物理Piano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
     const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
     
     const salvaEChiudi = async (keep=false) => { 
@@ -610,7 +608,6 @@
         document.getElementById('modal-pz').classList.remove('hidden');
     }
 
-    // NUOVA FUNZIONE DI STAMPA ISOLATA E SICURA SU QUALSIASI DISPOSITIVO
     const generaStampa = () => {
         if(!curPz) return;
         
@@ -628,7 +625,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.4 | Report generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.5 | Report generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -656,7 +653,6 @@
         
         htmlContent += `</body></html>`;
 
-        // Apre una finestra temporanea parallela, vi inietta il codice e attiva la stampante nativa
         const winStampa = window.open('', '_blank');
         winStampa.document.write(htmlContent);
         winStampa.document.close();
@@ -674,6 +670,7 @@
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
     document.getElementById('nav-logout').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
+    document.getElementById('cercaArchivio').onkeyup = renderArchivio;
     
     document.getElementById('btn-esci-clinica').onclick = () => showSection('dashboard');
     document.getElementById('btn-ripristina-clinica').onclick = () => toggleStato(curPz.id, true);
