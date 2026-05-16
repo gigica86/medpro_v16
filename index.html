@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.3 | Clinical Management (Secure & Storage)</title>
+    <title>MEDPRO v16.4 | Clinical Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -36,7 +36,26 @@
         .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
         .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        .main-content { margin-left: 220px; padding: 30px; width: 100%; box-sizing: border-box; }
+        /* HEADER SUPERIORE PER IDENTITÀ UTENTE */
+        .top-navbar {
+            position: fixed; top: 0; left: 220px; right: 0; height: 60px;
+            background: white; border-bottom: 1px solid var(--zinc-200);
+            display: flex; align-items: center; justify-content: flex-end;
+            padding: 0 30px; box-sizing: border-box; z-index: 90;
+        }
+        .user-badge {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--zinc-100); padding: 6px 14px;
+            border-radius: 20px; border: 1px solid var(--zinc-200);
+            font-size: 13px; font-weight: 500; color: var(--zinc-800);
+        }
+        .user-avatar {
+            width: 24px; height: 24px; background: var(--primary);
+            color: white; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
+        }
+
+        .main-content { margin-left: 220px; padding: 90px 30px 30px 30px; width: 100%; box-sizing: border-box; }
         .card { background: white; border: 1px solid var(--zinc-200); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
         .clinica-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
@@ -69,20 +88,9 @@
             .sidebar-header { display: none; }
             .nav-btn { width: auto; padding: 10px; border-left: none; }
             .nav-btn.active { border-bottom: 3px solid var(--primary); }
+            .top-navbar { left: 0; padding: 0 15px; height: 50px; background: var(--zinc-100); position: relative; }
             .main-content { margin-left: 0; padding: 15px; }
             .clinica-grid { grid-template-columns: 1fr; }
-        }
-
-        #print-section { display: none; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #print-section, #print-section * { visibility: visible !important; }
-            #print-section { 
-                display: block !important; 
-                position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 0; margin: 0; z-index: 99999;
-            }
-            .sidebar, .nav-btn, button, .modal, .main-content { display: none !important; }
         }
     </style>
 </head>
@@ -107,6 +115,14 @@
     <button class="nav-btn" id="nav-logout" style="margin-top:auto; color:var(--danger)">🚪 Esci</button>
 </div>
 
+<!-- TOP BAR CON ACCOUNT LOGGATO -->
+<div class="top-navbar">
+    <div class="user-badge" id="user-display" style="display:none;">
+        <div class="user-avatar" id="user-avatar-letter">MD</div>
+        <span id="user-email-text">medico@account.it</span>
+    </div>
+</div>
+
 <div class="main-content">
     <div id="section-dashboard">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
@@ -123,7 +139,7 @@
 
     <div id="section-archivio" class="hidden">
         <h1>Archivio Storico</h1>
-        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente...">
+        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente..." onkeyup="renderArchivio()">
         <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
                 <thead><tr><th>Nominativo</th><th>Azioni</th></tr></thead>
@@ -168,8 +184,6 @@
         </div>
     </div>
 </div>
-
-<div id="print-section"></div>
 
 <!-- MODALS -->
 <div id="modal-pz" class="modal hidden">
@@ -220,7 +234,7 @@
         apiKey: "AIzaSyBRg-aZUHKF0SyrxBT4vgDqHK6LuGVAnZ8",
         authDomain: "medpro16-11124.firebaseapp.com",
         projectId: "medpro16-11124",
-        storageBucket: "medpro16-11124.appspot.com", // Adattato bucket corretto standard per storage
+        storageBucket: "medpro16-11124.appspot.com",
         messagingSenderId: "818669381026",
         appId: "1:818669381026:web:c96bb4f71ede703c97befb"
     };
@@ -282,12 +296,25 @@
         if (user) {
             currentUser = user;
             document.getElementById('login-screen').classList.add('hidden');
+            
+            // Aggiorna l'interfaccia utente loggato in alto a destra
+            const userDisplay = document.getElementById('user-display');
+            const userEmailText = document.getElementById('user-email-text');
+            const userAvatarLetter = document.getElementById('user-avatar-letter');
+            if(userDisplay && userEmailText) {
+                userEmailText.textContent = user.email;
+                userAvatarLetter.textContent = user.email.substring(0, 2).toUpperCase();
+                userDisplay.style.display = "flex";
+            }
+
             await syncDatiDaFirebase();
             showSection('dashboard');
         } else {
             currentUser = null;
             elencoPazientiCache = [];
             document.getElementById('login-screen').classList.remove('hidden');
+            const userDisplay = document.getElementById('user-display');
+            if(userDisplay) userDisplay.style.display = "none";
         }
     });
 
@@ -478,13 +505,12 @@
             divClick.innerHTML = `<strong>${escapeHTML(d.nome)}</strong><br><small>${escapeHTML(d.data)}</small>`;
             divClick.onclick = () => apriFocus(i);
 
-            // Se presente un file allegato, mostra l'icona della clip
             if(d.fileUrl) {
                 const clip = document.createElement('a');
                 clip.href = d.fileUrl; clip.target = "_blank"; clip.textContent = " 📎";
                 clip.style.textDecoration = "none"; clip.style.marginLeft = "5px";
                 clip.title = d.fileName || "Vedi allegato";
-                clip.onclick = (e) => e.stopPropagation(); // Evita di aprire il focus cliccando l'allegato
+                clip.onclick = (e) => e.stopPropagation(); 
                 divClick.appendChild(clip);
             }
 
@@ -566,7 +592,7 @@
         renderImbuto();
     }
 
-    const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    const物理Piano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
     const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
     
     const salvaEChiudi = async (keep=false) => { 
@@ -584,41 +610,62 @@
         document.getElementById('modal-pz').classList.remove('hidden');
     }
 
+    // NUOVA FUNZIONE DI STAMPA ISOLATA E SICURA SU QUALSIASI DISPOSITIVO
     const generaStampa = () => {
         if(!curPz) return;
-        const printSection = document.getElementById('print-section');
-        let html = `<div style="font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff;">
-            <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 30px;">
-                <h1 style="margin:0; text-transform: uppercase;">Cartella Clinica</h1>
-                <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.3 | Report del ${new Date().toLocaleDateString()}</p>
-            </div>
-            <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
-                <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
-                <div><strong>Telefono:</strong> ${escapeHTML(curPz.tel) || '--'}<br><strong>Email:</strong> ${escapeHTML(curPz.email) || '--'}<br><strong>Indirizzo:</strong> ${escapeHTML(curPz.via) || '--'}</div>
-            </div>`;
+        
+        let htmlContent = `<html><head><title>Stampa Cartella Clinica</title>
+        <style>
+            body { font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff; }
+            .header { border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+            .grid { border: 1px solid #ccc; background: #f9f9f9; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px; }
+            .diag-block { margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+            .diag-title { background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px; }
+            .piano-block { margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px; }
+            .piano-title { font-weight: bold; text-decoration: underline; }
+            .nota-item { font-size: 12px; margin-top: 5px; border-top: 1px solid #f1f1f1; padding-top: 3px; }
+        </style>
+        </head><body>
+        <div class="header">
+            <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.4 | Report generato il ${new Date().toLocaleDateString()}</p>
+        </div>
+        <div class="grid">
+            <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
+            <div><strong>Telefono:</strong> ${escapeHTML(curPz.tel) || '--'}<br><strong>Email:</strong> ${escapeHTML(curPz.email) || '--'}<br><strong>Indirizzo:</strong> ${escapeHTML(curPz.via) || '--'}</div>
+        </div>`;
 
         if (curPz.diagnosi) {
             curPz.diagnosi.forEach(d => {
-                html += `<div style="margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px;">
-                    <div style="background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px;">PATOLOGIA: ${escapeHTML(d.nome)} (${escapeHTML(d.data)})</div>
+                htmlContent += `<div class="diag-block">
+                    <div class="diag-title">PATOLOGIA: ${escapeHTML(d.nome)} (${escapeHTML(d.data)})</div>
                     <p><strong>Note Diagnosi:</strong> ${escapeHTML(d.sintesi) || '--'}</p>`;
-                if(d.fileUrl) { html += `<p style="font-size:12px; color:#555;">📁 File Allegato Cloud: ${escapeHTML(d.fileName)}</p>`; }
+                if(d.fileUrl) { htmlContent += `<p style="font-size:12px; color:#555;">📁 File Allegato Cloud: ${escapeHTML(d.fileName)}</p>`; }
                 if (d.piani) d.piani.forEach(p => {
-                    html += `<div style="margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px;">
-                        <div style="font-weight: bold; text-decoration: underline;">Piano Terapeutico del ${escapeHTML(p.data)}</div>
+                    htmlContent += `<div class="piano-block">
+                        <div class="piano-title">Piano Terapeutico del ${escapeHTML(p.data)}</div>
                         <p style="margin: 5px 0; white-space:pre-line;">${escapeHTML(p.testo)}</p>`;
                     if (p.diario) p.diario.forEach(n => {
-                        html += `<div style="font-size: 12px; margin-top: 5px; border-top: 1px solid #f1f1f1;"><strong>${escapeHTML(n.data)}:</strong> ${escapeHTML(n.testo)}</div>`;
+                        htmlContent += `<div class="nota-item"><strong>${escapeHTML(n.data)}:</strong> ${escapeHTML(n.testo)}</div>`;
                     });
-                    html += `</div>`;
+                    htmlContent += `</div>`;
                 });
-                html += `</div>`;
+                htmlContent += `</div>`;
             });
         }
-        printSection.innerHTML = html + `</div>`;
         
-        // Timeout stabile per consentire il re-rendering CSS prima dell'invio dei comandi di sistema della stampante
-        setTimeout(() => { window.print(); }, 250);
+        htmlContent += `</body></html>`;
+
+        // Apre una finestra temporanea parallela, vi inietta il codice e attiva la stampante nativa
+        const winStampa = window.open('', '_blank');
+        winStampa.document.write(htmlContent);
+        winStampa.document.close();
+        winStampa.focus();
+        
+        setTimeout(() => {
+            winStampa.print();
+            winStampa.close();
+        }, 500);
     }
 
     // ---- ATTACCO DEGLI EVENT LISTENER ----
@@ -627,7 +674,6 @@
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
     document.getElementById('nav-logout').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
-    document.getElementById('cercaArchivio').onkeyup = renderArchivio;
     
     document.getElementById('btn-esci-clinica').onclick = () => showSection('dashboard');
     document.getElementById('btn-ripristina-clinica').onclick = () => toggleStato(curPz.id, true);
