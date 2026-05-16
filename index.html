@@ -209,21 +209,20 @@
     </div>
 </div>
 
-<!-- SCRIPTS INTEGRATI FIREBASE (V10 MODULARE VIA CDN) -->
+<!-- SCRIPTS INTEGRATI FIREBASE -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ---- CONFIGURAZIONE FIREBASE ----
-    // Sostituisci questo oggetto con i parametri reali estratti dalla tua console Firebase
+    // CONFIGURAZIONE REALE INTEGRATA
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyBRg-aZUHKF0SyrxBT4vgDqHK6LuGVAnZ8",
+        authDomain: "medpro16-11124.firebaseapp.com",
+        projectId: "medpro16-11124",
+        storageBucket: "medpro16-11124.firebasestorage.app",
+        messagingSenderId: "818669381026",
+        appId: "1:818669381026:web:c96bb4f71ede703c97befb"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -243,24 +242,24 @@
         const emailEl = document.getElementById('login-email');
         const passEl = document.getElementById('login-password');
         
-        if (!emailEl || !passEl) return alert("Errore dell'interfaccia nel DOM.");
+        if (!emailEl || !passEl) return;
 
         const email = emailEl.value.trim();
         const pass = passEl.value;
 
-        if (!email || !pass) return alert("Per favore, inserisci sia l'email che la password.");
+        if (!email || !pass) return alert("Inserisci email e password.");
 
         try {
-            document.getElementById('login-error').innerText = "Verifica credenziali...";
+            document.getElementById('login-error').innerText = "Accesso in corso...";
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err) {
-            alert("Impossibile accedere:\n" + err.message);
-            document.getElementById('login-error').innerText = "Accesso fallito. Verifica le credenziali.";
+            alert("Credenziali errate o utente non configurato su Firebase.");
+            document.getElementById('login-error').innerText = "Accesso fallito. Riprova.";
         }
     };
 
     window.handleLogout = () => {
-        signOut(auth).catch((err) => alert("Errore logout: " + err.message));
+        signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -287,14 +286,14 @@
                 elencoPazientiCache.push(doc.data());
             });
         } catch(e) {
-            alert("Errore Firestore:\n" + e.message + "\n\nVerifica di aver attivato Firestore Database e configurato le Regole nella console.");
+            alert("Configurazione Firestore mancante.\nAssicurati di aver premuto 'Crea database' nella sezione Firestore della console.");
         }
     }
 
     async function salvaPazienteSuCloud(pazienteObj) {
         if(!currentUser) return;
         pazienteObj.userId = currentUser.uid;
-        await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
+        await setDoc(doc(db, "pazienti", pazienteObj.id), pacienteObj);
         await syncDatiDaFirebase();
     }
 
@@ -314,7 +313,7 @@
     window.salvaAnagrafica = async () => {
         const nome = document.getElementById('m-nome').value.trim();
         const cf = document.getElementById('m-cf').value.trim();
-        if(!nome || !cf) return alert("Nome e Codice Fiscale sono obbligatori.");
+        if(!nome || !cf) return alert("Nome e CF sono obbligatori.");
         
         let dati = { nome, cf, nascita: document.getElementById('m-nascita').value, via: document.getElementById('m-via').value, tel: document.getElementById('m-tel').value, email: document.getElementById('m-email').value };
         
@@ -369,7 +368,7 @@
     }
 
     window.eliminaDefinitivo = async (id) => {
-        if(confirm("Cancellare definitivamente questo record dal Cloud?")) { 
+        if(confirm("Eliminare definitivamente questo record dal cloud?")) { 
             await deleteDoc(doc(db, "pazienti", id));
             await syncDatiDaFirebase();
             window.renderArchivio(); 
@@ -416,7 +415,7 @@
         });
     }
 
-    window.eliminaDiagnosi = async (idx) => { if(confirm("Eliminare questa diagnosi?")) { window.curPz.diagnosi.splice(idx, 1); await window.salvaEChiudi(true); } }
+    window.eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { window.curPz.diagnosi.splice(idx, 1); await window.salvaEChiudi(true); } }
 
     window.apriFocus = (idx) => {
         window.curDiagIdx = idx; 
@@ -483,8 +482,8 @@
         window.renderImbuto();
     }
 
-    window.eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano terapeutico?")) { window.curPz.diagnosi[window.curDiagIdx].piani.splice(idx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
-    window.eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota dal diario?")) { window.curPz.diagnosi[window.curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
+    window.eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { window.curPz.diagnosi[window.curDiagIdx].piani.splice(idx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
+    window.eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { window.curPz.diagnosi[window.curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await window.salvaEChiudi(true); window.renderImbuto(); } }
     
     window.salvaEChiudi = async (keep=false) => { 
         await salvaPazienteSuCloud(window.curPz); 
