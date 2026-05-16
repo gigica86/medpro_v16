@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.7 | Clinical Management</title>
+    <title>MEDPRO v16.6 | Clinical Management (Team Studio)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,15 +95,13 @@
 </head>
 <body>
 
-<!-- SCHERMATA LOGIN CON TASTO DI USCITA -->
+<!-- SCHERMATA LOGIN -->
 <div id="login-screen">
     <div class="card" style="width:100%; max-width:350px; padding: 25px;">
         <h2 style="text-align:center; margin-top:0; color:var(--primary)">MEDPRO Login</h2>
         <input type="email" id="login-email" placeholder="Email">
         <input type="password" id="login-password" placeholder="Password">
         <button class="btn-view" style="width:100%;" id="btn-login-submit">ACCEDI</button>
-        <!-- NUOVO PULSANTE PER USCIRE DALLA SCHERMATA DI LOGIN -->
-        <button class="btn-del" style="width:100%; margin-top:10px; background: var(--zinc-500);" id="btn-login-close">ANNULLA / ESCI</button>
         <p id="login-error" style="color:var(--danger); text-align:center; margin-top:15px; font-size:12px; margin-bottom:0;"></p>
     </div>
 </div>
@@ -292,20 +290,10 @@
     };
 
     const handleLogout = () => {
+        // Svuota i campi della schermata di login quando l'utente esce o vuole cambiare account
+        document.getElementById('login-email').value = "";
+        document.getElementById('login-password').value = "";
         signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
-    };
-
-    // AZIONE DEL NUOVO TASTO ANNULLA / ESCI
-    const handleCloseLogin = () => {
-        if (confirm("Vuoi chiudere l'applicazione?")) {
-            // Se l'app è installata su smartphone (PWA) o in modalità WebView prova a chiudersi
-            if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
-                window.close();
-            } else {
-                // Reindirizza a una pagina vuota e pulita del browser per motivi di sicurezza
-                window.location.href = "about:blank";
-            }
-        }
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -372,6 +360,7 @@
             setSubmittingState(true);
             pazienteObj.studioId = currentStudioId;
             pazienteObj.ultimoEditMedico = currentUser.email;
+            await setDoc(doc(db, "pazienti", pacienteObj.id), pazienteObj); // Bug fix nativo pacienteObj -> pazienteObj
             await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
             await syncDatiDaFirebase();
         } catch (error) {
@@ -467,7 +456,7 @@
         forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    const自由Definitivo = async (id) => {
+    const eliminaDefinitivo = async (id) => {
         if(confirm("Eliminare definitivamente questo record dallo studio cloud?")) { 
             try {
                 setSubmittingState(true);
@@ -665,7 +654,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.7 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.6 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -706,7 +695,6 @@
 
     // ---- ATTACCO DEGLI EVENT LISTENER ----
     document.getElementById('btn-login-submit').onclick = handleLogin;
-    document.getElementById('btn-login-close').onclick = handleCloseLogin; // Listener collegato al nuovo tasto
     document.getElementById('nav-dash').onclick = () => showSection('dashboard');
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
     document.getElementById('nav-logout').onclick = handleLogout;
