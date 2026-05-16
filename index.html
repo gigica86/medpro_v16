@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.8 | Clinical Management</title>
+    <title>MEDPRO v16.9 | Clinical Management (Stabile)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -43,7 +43,6 @@
             padding: 0 30px; box-sizing: border-box; z-index: 90;
         }
         
-        /* BADGE ACCOUNT CLICCABILE PER LOGOUT */
         .user-badge {
             display: flex; align-items: center; gap: 8px;
             background: var(--zinc-100); padding: 6px 14px;
@@ -117,16 +116,16 @@
     </div>
 </div>
 
-<!-- APPLICATIVO PRINCIPALE (SIDEBAR SENZA VECCHIO LOGOUT FISSO) -->
+<!-- APPLICATIVO PRINCIPALE -->
 <div class="sidebar">
     <div class="sidebar-header"><div class="logo-box">M</div><h2>MEDPRO</h2></div>
     <button class="nav-btn active" id="nav-dash">📋 In Cura</button>
     <button class="nav-btn" id="nav-arch">📂 Archivio</button>
 </div>
 
-<!-- TOP BAR CON ACCOUNT LOGGATO (CLICCABILE PER LOGOUT) -->
+<!-- TOP BAR CON INFO ACCOUNT (CLICCABILE PER CAMBIO ACCOUNT) -->
 <div class="top-navbar">
-    <div class="user-badge" id="user-display" style="display:none;" title="Clicca per uscire o cambiare account">
+    <div class="user-badge" id="user-display" style="display:none;" title="Clicca qui per uscire e cambiare account medico">
         <div class="user-avatar" id="user-avatar-letter">MD</div>
         <span id="user-email-text">medico@account.it</span>
         <span id="user-studio-tag" style="margin-left:5px; background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Studio: --</span>
@@ -301,7 +300,6 @@
 
     const handleLogout = () => {
         if(confirm("Disconnettersi dallo studio e cambiare account?")) {
-            // Svuota i campi della schermata di login per inserire il nuovo utente
             document.getElementById('login-email').value = "";
             document.getElementById('login-password').value = "";
             signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
@@ -453,7 +451,7 @@
             btnTog.onclick = () => toggleStato(p.id);
 
             const btnDel = document.createElement('button'); btnDel.className = "btn-icon"; btnDel.style.color = "var(--danger)"; btnDel.textContent = "🗑️";
-            btnDel.onclick = () =>自由Definitivo(p.id); // Bugfix ripristinato nome funzione corretta
+            btnDel.onclick = () => eliminaDefinitivo(p.id);
 
             tr.cells[1].appendChild(btnView); tr.cells[1].appendChild(btnTog); tr.cells[1].appendChild(btnDel);
             tbody.appendChild(tr);
@@ -467,7 +465,7 @@
         forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    const自由Definitivo = async (id) => {
+    const eliminaDefinitivo = async (id) => {
         if(confirm("Eliminare definitivamente questo record dallo studio cloud?")) { 
             try {
                 setSubmittingState(true);
@@ -665,7 +663,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.6 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.9 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -708,7 +706,7 @@
     document.getElementById('btn-login-submit').onclick = handleLogin;
     document.getElementById('nav-dash').onclick = () => showSection('dashboard');
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
-    document.getElementById('user-display').onclick = handleLogout; // TASTO LOGOUT COLLEGATO AL NOME IN ALTO A DESTRA
+    document.getElementById('user-display').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
     document.getElementById('cercaArchivio').onkeyup = renderArchivio;
     
