@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.2 | Clinical Management (Secure)</title>
+    <title>MEDPRO v16.3 | Clinical Management (Secure & Storage)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -77,10 +77,10 @@
 
         @media print {
             body * { visibility: hidden; }
-            #print-section, #print-section * { visibility: visible; }
+            #print-section, #print-section * { visibility: visible !important; }
             #print-section { 
                 display: block !important; 
-                position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 0; margin: 0;
+                position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 0; margin: 0; z-index: 99999;
             }
             .sidebar, .nav-btn, button, .modal, .main-content { display: none !important; }
         }
@@ -192,6 +192,8 @@
         <input type="text" id="m-diag-nome" placeholder="Patologia">
         <input type="text" id="m-diag-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-diag-sintesi" placeholder="Note..."></textarea>
+        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:12px;">Carica Referto/Allegato (Opzionale):</label>
+        <input type="file" id="m-diag-file" style="font-size:13px!important;">
         <button class="btn-view" style="width:100%" id="btn-salva-diagnosi">SALVA</button>
         <button class="btn-del close-modal-btn" style="width:100%; margin-top:8px;">CHIUDI</button>
     </div>
@@ -212,12 +214,13 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBRg-aZUHKF0SyrxBT4vgDqHK6LuGVAnZ8",
         authDomain: "medpro16-11124.firebaseapp.com",
         projectId: "medpro16-11124",
-        storageBucket: "medpro16-11124.firebasestorage.app",
+        storageBucket: "medpro16-11124.appspot.com", // Adattato bucket corretto standard per storage
         messagingSenderId: "818669381026",
         appId: "1:818669381026:web:c96bb4f71ede703c97befb"
     };
@@ -225,6 +228,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     let currentUser = null;
     let elencoPazientiCache = [];
@@ -234,7 +238,6 @@
     let editMode = false;
     let openDiarioIdx = null;
 
-    // Helper per mitigazione XSS elementare nelle stringhe HTML
     function escapeHTML(str) {
         if (!str) return '';
         return str.replace(/[&<>"']/g, function(match) {
@@ -243,35 +246,31 @@
         });
     }
 
-    // Cambia lo stato visivo dei pulsanti durante le chiamate di rete
-    function setSubmittingState(isSubmit) {
+    function setSubmittingState(isSubmit, customText = null) {
         document.querySelectorAll('button').forEach(btn => {
             btn.disabled = isSubmit;
         });
+        const loginErr = document.getElementById('login-error');
+        if(loginErr && customText) loginErr.innerText = customText;
     }
 
     // ---- FUNZIONI AUTH ----
     const handleLogin = async () => {
         const emailEl = document.getElementById('login-email');
         const passEl = document.getElementById('login-password');
-        const errorEl = document.getElementById('login-error');
         
         if (!emailEl || !passEl) return;
-
         const email = emailEl.value.trim();
         const pass = passEl.value;
 
         if (!email || !pass) return alert("Inserisci email e password.");
 
         try {
-            errorEl.innerText = "Accesso in corso...";
-            setSubmittingState(true);
+            setSubmittingState(true, "Accesso in corso...");
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err) {
-            alert("Credenziali errate o utente non configurato su Firebase.");
-            errorEl.innerText = "Accesso fallito. Riprova.";
-        } finally {
-            setSubmittingState(false);
+            alert("Credenziali errate.");
+            setSubmittingState(false, "Accesso fallito.");
         }
     };
 
@@ -292,7 +291,7 @@
         }
     });
 
-    // ---- DATA SYNC DATABASE ----
+    // ---- DATA SYNC ----
     async function syncDatiDaFirebase() {
         if (!currentUser) return;
         try {
@@ -303,7 +302,7 @@
                 elencoPazientiCache.push(doc.data());
             });
         } catch(e) {
-            alert("Errore caricamento database:\n" + e.message);
+            alert("Errore database: " + e.message);
         }
     }
 
@@ -315,7 +314,7 @@
             await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
             await syncDatiDaFirebase();
         } catch (error) {
-            alert("Errore di salvataggio su Firebase:\n" + error.message);
+            alert("Errore salvataggio cloud: " + error.message);
             throw error;
         } finally {
             setSubmittingState(false);
@@ -331,14 +330,8 @@
         if (section) section.classList.remove('hidden');
         
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(id==='dashboard') {
-            document.getElementById('nav-dash').classList.add('active');
-            renderDashboard();
-        }
-        if(id==='archivio') {
-            document.getElementById('nav-arch').classList.add('active');
-            renderArchivio();
-        }
+        if(id==='dashboard') { document.getElementById('nav-dash').classList.add('active'); renderDashboard(); }
+        if(id==='archivio') { document.getElementById('nav-arch').classList.add('active'); renderArchivio(); }
     }
 
     const salvaAnagrafica = async () => {
@@ -347,17 +340,15 @@
         if(!nome || !cf) return alert("Nome e CF sono obbligatori.");
         
         let dati = { 
-            nome, 
-            cf, 
+            nome, cf, 
             nascita: document.getElementById('m-nascita').value, 
             via: document.getElementById('m-via').value, 
             tel: document.getElementById('m-tel').value, 
             email: document.getElementById('m-email').value 
         };
         
-        if(editMode) {
-            Object.assign(curPz, dati);
-        } else { 
+        if(editMode) { Object.assign(curPz, dati); } 
+        else { 
             const id = "PZ-" + Date.now(); 
             curPz = { id, ...dati, stato: 'attivo', dataApertura: new Date().toLocaleDateString(), diagnosi: [] }; 
         }
@@ -373,32 +364,16 @@
         const tbody = document.getElementById('lista-attivi'); tbody.innerHTML = "";
         elencoPazientiCache.filter(p => p.stato === 'attivo').forEach(p => {
             const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${escapeHTML(p.dataApertura)}</td><td><strong>${escapeHTML(p.nome)}</strong></td><td></td>`;
             
-            const tdData = document.createElement('td');
-            tdData.textContent = p.dataApertura;
-            
-            const tdNome = document.createElement('td');
-            const strong = document.createElement('strong');
-            strong.textContent = p.nome;
-            tdNome.appendChild(strong);
-
-            const tdAzioni = document.createElement('td');
-            const btnView = document.createElement('button');
-            btnView.className = "btn-icon";
-            btnView.textContent = "👁️";
+            const btnView = document.createElement('button'); btnView.className = "btn-icon"; btnView.textContent = "👁️";
             btnView.onclick = () => apriClinica(p.id);
 
-            const btnTog = document.createElement('button');
-            btnTog.className = "btn-icon";
-            btnTog.textContent = "📂";
+            const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "📂";
             btnTog.onclick = () => toggleStato(p.id);
 
-            tdAzioni.appendChild(btnView);
-            tdAzioni.appendChild(btnTog);
-
-            tr.appendChild(tdData);
-            tr.appendChild(tdNome);
-            tr.appendChild(tdAzioni);
+            tr.cells[2].appendChild(btnView);
+            tr.cells[2].appendChild(btnTog);
             tbody.appendChild(tr);
         });
     }
@@ -408,36 +383,18 @@
         const tbody = document.getElementById('lista-archiviati'); tbody.innerHTML = "";
         elencoPazientiCache.filter(p => p.stato === 'archiviato' && p.nome.toLowerCase().includes(q)).forEach(p => {
             const tr = document.createElement('tr');
+            tr.innerHTML = `<td><strong>${escapeHTML(p.nome)}</strong></td><td></td>`;
             
-            const tdNome = document.createElement('td');
-            const strong = document.createElement('strong');
-            strong.textContent = p.nome;
-            tdNome.appendChild(strong);
-
-            const tdAzioni = document.createElement('td');
-            
-            const btnView = document.createElement('button');
-            btnView.className = "btn-icon";
-            btnView.textContent = "👁️";
+            const btnView = document.createElement('button'); btnView.className = "btn-icon"; btnView.textContent = "👁️";
             btnView.onclick = () => apriClinica(p.id);
 
-            const btnTog = document.createElement('button');
-            btnTog.className = "btn-icon";
-            btnTog.textContent = "🔄";
+            const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "🔄";
             btnTog.onclick = () => toggleStato(p.id);
 
-            const btnDel = document.createElement('button');
-            btnDel.className = "btn-icon";
-            btnDel.style.color = "var(--danger)";
-            btnDel.textContent = "🗑️";
+            const btnDel = document.createElement('button'); btnDel.className = "btn-icon"; btnDel.style.color = "var(--danger)"; btnDel.textContent = "🗑️";
             btnDel.onclick = () => eliminaDefinitivo(p.id);
 
-            tdAzioni.appendChild(btnView);
-            tdAzioni.appendChild(btnTog);
-            tdAzioni.appendChild(btnDel);
-            
-            tr.appendChild(tdNome);
-            tr.appendChild(tdAzioni);
+            tr.cells[1].appendChild(btnView); tr.cells[1].appendChild(btnTog); tr.cells[1].appendChild(btnDel);
             tbody.appendChild(tr);
         });
     }
@@ -456,11 +413,7 @@
                 await deleteDoc(doc(db, "pazienti", id));
                 await syncDatiDaFirebase();
                 renderArchivio();
-            } catch(e) {
-                alert("Impossibile eliminare: " + e.message);
-            } finally {
-                setSubmittingState(false);
-            }
+            } catch(e) { alert(e.message); } finally { setSubmittingState(false); }
         } 
     }
 
@@ -475,17 +428,41 @@
     }
 
     const salvaDiagnosi = async () => {
+        const fileInput = document.getElementById('m-diag-file');
+        let fileUrl = null;
+        let fileName = null;
+
+        if (fileInput && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const storageRef = ref(storage, `allegati/${curPz.id}/${Date.now()}_${file.name}`);
+            try {
+                setSubmittingState(true, "Caricamento allegato...");
+                const snapshot = await uploadBytes(storageRef, file);
+                fileUrl = await getDownloadURL(snapshot.ref);
+                fileName = file.name;
+            } catch (err) {
+                alert("Errore durante l'upload del file: " + err.message);
+                setSubmittingState(false);
+                return;
+            }
+        }
+
         curPz.diagnosi.push({ 
             nome: document.getElementById('m-diag-nome').value, 
             data: document.getElementById('m-diag-data').value || '--', 
             sintesi: document.getElementById('m-diag-sintesi').value, 
+            fileUrl: fileUrl,
+            fileName: fileName,
             piani: [] 
         });
+
         await salvaPazienteSuCloud(curPz);
         
         document.getElementById('m-diag-nome').value = "";
         document.getElementById('m-diag-data').value = "";
         document.getElementById('m-diag-sintesi').value = "";
+        if(fileInput) fileInput.value = "";
+        
         chiudiTutto(); 
         renderDiagnosi();
     }
@@ -501,15 +478,21 @@
             divClick.innerHTML = `<strong>${escapeHTML(d.nome)}</strong><br><small>${escapeHTML(d.data)}</small>`;
             divClick.onclick = () => apriFocus(i);
 
-            const btnDel = document.createElement('button');
-            btnDel.style.background = "none";
-            btnDel.style.border = "none";
-            btnDel.style.fontSize = "20px";
-            btnDel.innerHTML = "&times;";
-            btnDel.onclick = () => eliminaDiagnosi(i);
+            // Se presente un file allegato, mostra l'icona della clip
+            if(d.fileUrl) {
+                const clip = document.createElement('a');
+                clip.href = d.fileUrl; clip.target = "_blank"; clip.textContent = " 📎";
+                clip.style.textDecoration = "none"; clip.style.marginLeft = "5px";
+                clip.title = d.fileName || "Vedi allegato";
+                clip.onclick = (e) => e.stopPropagation(); // Evita di aprire il focus cliccando l'allegato
+                divClick.appendChild(clip);
+            }
 
-            row.appendChild(divClick);
-            row.appendChild(btnDel);
+            const btnDel = document.createElement('button');
+            btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
+            btnDel.onclick = (e) => { e.stopPropagation(); eliminaDiagnosi(i); };
+
+            row.appendChild(divClick); row.appendChild(btnDel);
             cont.appendChild(row);
         });
     }
@@ -523,7 +506,9 @@
         document.getElementById('focus-titolo').textContent = diag.nome;
         
         const sBox = document.getElementById('focus-sintesi');
-        sBox.textContent = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita per questa diagnosi.";
+        let notaTesto = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita per questa diagnosi.";
+        if(diag.fileUrl) notaTesto += `\n[Allegato: ${diag.fileName || 'Presente'}]`;
+        sBox.textContent = notaTesto;
         renderImbuto();
     }
 
@@ -605,7 +590,7 @@
         let html = `<div style="font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff;">
             <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 30px;">
                 <h1 style="margin:0; text-transform: uppercase;">Cartella Clinica</h1>
-                <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.2 | Report del ${new Date().toLocaleDateString()}</p>
+                <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.3 | Report del ${new Date().toLocaleDateString()}</p>
             </div>
             <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
                 <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -617,6 +602,7 @@
                 html += `<div style="margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px;">
                     <div style="background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px;">PATOLOGIA: ${escapeHTML(d.nome)} (${escapeHTML(d.data)})</div>
                     <p><strong>Note Diagnosi:</strong> ${escapeHTML(d.sintesi) || '--'}</p>`;
+                if(d.fileUrl) { html += `<p style="font-size:12px; color:#555;">📁 File Allegato Cloud: ${escapeHTML(d.fileName)}</p>`; }
                 if (d.piani) d.piani.forEach(p => {
                     html += `<div style="margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px;">
                         <div style="font-weight: bold; text-decoration: underline;">Piano Terapeutico del ${escapeHTML(p.data)}</div>
@@ -630,10 +616,12 @@
             });
         }
         printSection.innerHTML = html + `</div>`;
-        setTimeout(() => { window.print(); }, 300);
+        
+        // Timeout stabile per consentire il re-rendering CSS prima dell'invio dei comandi di sistema della stampante
+        setTimeout(() => { window.print(); }, 250);
     }
 
-    // ---- ATTACCO DEGLI EVENT LISTENER LATO DOM ----
+    // ---- ATTACCO DEGLI EVENT LISTENER ----
     document.getElementById('btn-login-submit').onclick = handleLogin;
     document.getElementById('nav-dash').onclick = () => showSection('dashboard');
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
