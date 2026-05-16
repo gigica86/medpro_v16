@@ -90,7 +90,7 @@
 </head>
 <body>
 
-<!-- SCHERMATA LOGIN (SOLO ACCESSO) -->
+<!-- SCHERMATA LOGIN -->
 <div id="login-screen">
     <div class="card" style="width:100%; max-width:350px; padding: 25px;">
         <h2 style="text-align:center; margin-top:0; color:var(--primary)">MEDPRO Login</h2>
@@ -205,7 +205,7 @@
         <input type="text" id="m-piano-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-piano-testo" placeholder="Dettagli..."></textarea>
         <button class="btn-view" style="width:100%" onclick="salvaPiano()">CREA</button>
-        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="ANNULLA()">ANNULLA</button>
+        <button class="btn-del" style="width:100%; margin-top:8px;" onclick="chiudiTutto()">ANNULLA</button>
     </div>
 </div>
 
@@ -216,6 +216,7 @@
     import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // ---- CONFIGURAZIONE FIREBASE ----
+    // Incolla qui l'oggetto del tuo SDK copiato dalla console di Firebase
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_AUTH_DOMAIN",
@@ -233,13 +234,14 @@
     let elencoPazientiCache = [];
     let curPz = null, curDiagIdx = null, editMode = false, openDiarioIdx = null;
 
-    // ---- FUNZIONI AUTH ----
+    // ---- FUNZIONI AUTH (Con alert specifico per iPad in caso di errore) ----
     window.handleLogin = async () => {
         const email = document.getElementById('login-email').value.trim();
         const pass = document.getElementById('login-password').value;
         try {
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (err) {
+            alert("Errore Firebase: " + err.message);
             document.getElementById('login-error').innerText = "Accesso fallito. Verifica le credenziali.";
         }
     };
@@ -264,12 +266,16 @@
     // ---- DATA SYNC DATABASE ----
     async function syncDatiDaFirebase() {
         if (!currentUser) return;
-        const q = query(collection(db, "pazienti"), where("userId", "==", currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        elencoPazientiCache = [];
-        querySnapshot.forEach((doc) => {
-            elencoPazientiCache.push(doc.data());
-        });
+        try {
+            const q = query(collection(db, "pazienti"), where("userId", "==", currentUser.uid));
+            const querySnapshot = await getDocs(q);
+            elencoPazientiCache = [];
+            querySnapshot.forEach((doc) => {
+                elencoPazientiCache.push(doc.data());
+            });
+        } catch(e) {
+            alert("Errore nel caricamento dei dati: " + e.message);
+        }
     }
 
     async function salvaPazienteSuCloud(pazienteObj) {
