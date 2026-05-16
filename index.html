@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v16.9 | Clinical Management (Stabile)</title>
+    <title>MEDPRO v17.0 | Clinical Management (Controllo Duplicati)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -123,7 +123,7 @@
     <button class="nav-btn" id="nav-arch">📂 Archivio</button>
 </div>
 
-<!-- TOP BAR CON INFO ACCOUNT (CLICCABILE PER CAMBIO ACCOUNT) -->
+<!-- TOP BAR CON INFO ACCOUNT -->
 <div class="top-navbar">
     <div class="user-badge" id="user-display" style="display:none;" title="Clicca qui per uscire e cambiare account medico">
         <div class="user-avatar" id="user-avatar-letter">MD</div>
@@ -395,9 +395,21 @@
 
     const salvaAnagrafica = async () => {
         const nome = document.getElementById('m-nome').value.trim();
-        const cf = document.getElementById('m-cf').value.trim();
+        const cf = document.getElementById('m-cf').value.trim().toUpperCase(); // Uniformiamo il CF in maiuscolo
         if(!nome || !cf) return alert("Nome e CF sono obbligatori.");
         
+        // LOGICA DI CONTROLLO DUPLICATI IN ARCHIVIO
+        if (!editMode) {
+            const duplicatoArchiviato = elencoPazientiCache.find(p => p.cf.toUpperCase() === cf && p.stato === 'archiviato');
+            if (duplicatoArchiviato) {
+                if (confirm(`Attenzione: Un paziente con questo codice fiscale (${cf}) è già presente nell'Archivio Storico.\n\nVuoi ripristinare la cartella esistente invece di crearne una nuova vuota?`)) {
+                    chiudiTutto();
+                    await toggleStato(duplicatoArchiviato.id, true); // Lo estrae dall'archivio e apre la cartella
+                    return;
+                }
+            }
+        }
+
         let dati = { 
             nome, cf, 
             nascita: document.getElementById('m-nascita').value, 
@@ -663,7 +675,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v16.9 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.0 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
