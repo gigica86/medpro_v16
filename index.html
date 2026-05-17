@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.0 | Clinical Management (Controllo Duplicati)</title>
+    <title>MEDPRO v17.1 | Clinical Management (Global Archive)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -128,14 +128,13 @@
     <div class="user-badge" id="user-display" style="display:none;" title="Clicca qui per uscire e cambiare account medico">
         <div class="user-avatar" id="user-avatar-letter">MD</div>
         <span id="user-email-text">medico@account.it</span>
-        <span id="user-studio-tag" style="margin-left:5px; background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Studio: --</span>
     </div>
 </div>
 
 <div class="main-content">
     <div id="section-dashboard">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-            <h1>Dashboard Team</h1>
+            <h1>Dashboard Condivisa</h1>
             <button class="btn-view" style="background: var(--success);" id="btn-nuovo-paziente">+ NUOVO PAZIENTE</button>
         </div>
         <div class="card" style="padding:0; overflow-x: auto;">
@@ -147,8 +146,8 @@
     </div>
 
     <div id="section-archivio" class="hidden">
-        <h1>Archivio Storico Condiviso</h1>
-        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente nello studio...">
+        <h1>Archivio Storico Globale</h1>
+        <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente nell'archivio...">
         <div class="card" style="padding:0; overflow-x: auto;">
             <table class="pazienti-table">
                 <thead><tr><th>Nominativo</th><th>Azioni</th></tr></thead>
@@ -204,7 +203,7 @@
         <input type="text" id="m-cf" placeholder="Codice Fiscale">
         <input type="text" id="m-tel" placeholder="Telefono">
         <input type="email" id="m-email" placeholder="Email">
-        <button class="btn-view" style="width:100%" id="btn-salva-anagrafica">SALVA IN STUDIO</button>
+        <button class="btn-view" style="width:100%" id="btn-salva-anagrafica">SALVA RECORDFILE</button>
         <button class="btn-del close-modal-btn" style="width:100%; margin-top:8px;">CHIUDI</button>
     </div>
 </div>
@@ -236,7 +235,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, collection, query, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const firebaseConfig = {
@@ -254,7 +253,6 @@
     const storage = getStorage(app);
 
     let currentUser = null;
-    let currentStudioId = "DEFAULT_STUDIO";
     let elencoPazientiCache = [];
     
     let curPz = null;
@@ -299,7 +297,7 @@
     };
 
     const handleLogout = () => {
-        if(confirm("Disconnettersi dallo studio e cambiare account?")) {
+        if(confirm("Disconnettersi e cambiare account medico?")) {
             document.getElementById('login-email').value = "";
             document.getElementById('login-password').value = "";
             signOut(auth).catch((err) => alert("Errore disconnessione: " + err.message));
@@ -311,29 +309,12 @@
             currentUser = user;
             document.getElementById('login-screen').classList.add('hidden');
             
-            try {
-                const userDocRef = doc(db, "utenti", user.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                
-                if (userDocSnap.exists() && userDocSnap.data().studioId) {
-                    currentStudioId = userDocSnap.data().studioId;
-                } else {
-                    currentStudioId = "STUDIO_" + user.email.split('@')[0].toUpperCase();
-                    await setDoc(userDocRef, { email: user.email, studioId: currentStudioId }, { merge: true });
-                }
-            } catch(err) {
-                console.error("Errore studioId, fallback in uso", err);
-                currentStudioId = "STUDIO_EMERGENCY_GAP";
-            }
-
             const userDisplay = document.getElementById('user-display');
             const userEmailText = document.getElementById('user-email-text');
             const userAvatarLetter = document.getElementById('user-avatar-letter');
-            const userStudioTag = document.getElementById('user-studio-tag');
             if(userDisplay) {
                 userEmailText.textContent = user.email;
                 userAvatarLetter.textContent = user.email.substring(0, 2).toUpperCase();
-                userStudioTag.textContent = "Studio: " + currentStudioId;
                 userDisplay.style.display = "flex";
             }
 
@@ -341,7 +322,6 @@
             showSection('dashboard');
         } else {
             currentUser = null;
-            currentStudioId = "DEFAULT_STUDIO";
             elencoPazientiCache = [];
             document.getElementById('login-screen').classList.remove('hidden');
             const userDisplay = document.getElementById('user-display');
@@ -349,18 +329,19 @@
         }
     });
 
-    // ---- DATA SYNC ----
+    // ---- DATA SYNC GLOBALE (SENZA FILTRI DI PROPRIETÀ) ----
     async function syncDatiDaFirebase() {
         if (!currentUser) return;
         try {
-            const q = query(collection(db, "pazienti"), where("studioId", "==", currentStudioId));
+            // Rimosso qualsiasi filtro 'where': carichiamo l'intera collezione pazienti
+            const q = collection(db, "pazienti");
             const querySnapshot = await getDocs(q);
             elencoPazientiCache = [];
             querySnapshot.forEach((doc) => {
                 elencoPazientiCache.push(doc.data());
             });
         } catch(e) {
-            alert("Errore database studio: " + e.message);
+            alert("Errore database: " + e.message);
         }
     }
 
@@ -368,12 +349,11 @@
         if(!currentUser) return;
         try {
             setSubmittingState(true);
-            pazienteObj.studioId = currentStudioId;
-            pazienteObj.ultimoEditMedico = currentUser.email;
+            pazienteObj.ultimoEditMedico = currentUser.email; 
             await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
             await syncDatiDaFirebase();
         } catch (error) {
-            alert("Errore salvataggio studio cloud: " + error.message);
+            alert("Errore salvataggio cloud: " + error.message);
             throw error;
         } finally {
             setSubmittingState(false);
@@ -395,16 +375,16 @@
 
     const salvaAnagrafica = async () => {
         const nome = document.getElementById('m-nome').value.trim();
-        const cf = document.getElementById('m-cf').value.trim().toUpperCase(); // Uniformiamo il CF in maiuscolo
+        const cf = document.getElementById('m-cf').value.trim().toUpperCase();
         if(!nome || !cf) return alert("Nome e CF sono obbligatori.");
         
-        // LOGICA DI CONTROLLO DUPLICATI IN ARCHIVIO
+        // CONTROLLO PAZIENTI DUPLICATI IN ARCHIVIO
         if (!editMode) {
             const duplicatoArchiviato = elencoPazientiCache.find(p => p.cf.toUpperCase() === cf && p.stato === 'archiviato');
             if (duplicatoArchiviato) {
-                if (confirm(`Attenzione: Un paziente con questo codice fiscale (${cf}) è già presente nell'Archivio Storico.\n\nVuoi ripristinare la cartella esistente invece di crearne una nuova vuota?`)) {
+                if (confirm(`Attenzione: Un paziente con questo Codice Fiscale (${cf}) è già presente in Archivio Storico.\n\nVuoi ripristinare la cartella esistente invece di crearne una nuova vuota?`)) {
                     chiudiTutto();
-                    await toggleStato(duplicatoArchiviato.id, true); // Lo estrae dall'archivio e apre la cartella
+                    await toggleStato(duplicatoArchiviato.id, true);
                     return;
                 }
             }
@@ -478,7 +458,7 @@
     }
 
     const eliminaDefinitivo = async (id) => {
-        if(confirm("Eliminare definitivamente questo record dallo studio cloud?")) { 
+        if(confirm("Eliminare definitivamente questo record dal cloud di rete globale?")) { 
             try {
                 setSubmittingState(true);
                 await deleteDoc(doc(db, "pazienti", id));
@@ -494,7 +474,7 @@
         document.getElementById('cli-nome').textContent = curPz.nome;
         
         let infoStr = `Nascita: ${curPz.nascita}\nCF: ${curPz.cf}\nTel: ${curPz.tel}`;
-        if(curPz.ultimoEditMedico) infoStr += `\nUltima modifica di: ${curPz.ultimoEditMedico}`;
+        if(curPz.ultimoEditMedico) infoStr += `\nUltimo salvataggio medico: ${curPz.ultimoEditMedico}`;
         
         document.getElementById('cli-info').textContent = infoStr;
         document.getElementById('btn-ripristina-clinica').className = curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
@@ -509,7 +489,7 @@
 
         if (fileInput && fileInput.files.length > 0) {
             const file = fileInput.files[0];
-            const storageRef = ref(storage, `allegati_studio/${currentStudioId}/${curPz.id}/${Date.now()}_${file.name}`);
+            const storageRef = ref(storage, `allegati_globali/${curPz.id}/${Date.now()}_${file.name}`);
             try {
                 setSubmittingState(true, "Caricamento allegato...");
                 const snapshot = await uploadBytes(storageRef, file);
@@ -641,7 +621,7 @@
     }
 
     const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
-    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    const自由Nota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
     
     const salvaEChiudi = async (keep=false) => { 
         await salvaPazienteSuCloud(curPz); 
@@ -675,7 +655,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.0 | Report Studio: ${escapeHTML(currentStudioId)} | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.1 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
