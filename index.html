@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.6 | Clinical Management (iOS Luxury UI)</title>
+    <title>MEDPRO v17.7 | Clinical Management (iOS Native Header)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,17 +25,17 @@
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
 
-        /* LOGO EMBEDDATO NELL'HEADER (NUOVO STILE LUXY) */
+        /* LOGO MEDPRO MINIMALE */
         .app-brand-inline {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+            display: flex; align-items: center; gap: 8px;
         }
         .logo-box-mini {
-            width: 24px; height: 24px; background: var(--primary); border-radius: 6px;
+            width: 26px; height: 26px; background: var(--primary); border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
             font-weight: 800; color: white; font-size: 14px;
         }
         .brand-text-mini {
-            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--zinc-500);
+            font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
         }
 
         /* SIDEBAR DESKTOP (PC) */
@@ -48,27 +48,22 @@
         .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
         .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        /* NAVBAR SUPERIORE DESKTOP */
+        /* NAVBAR SUPERIORE UNIFICATA (PC) */
         .top-navbar {
             position: fixed; top: 0; left: 240px; right: 0; height: 65px;
             background: white; border-bottom: 1px solid var(--zinc-200);
-            display: flex; align-items: center; justify-content: flex-end;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 0 30px; box-sizing: border-box; z-index: 90;
         }
         
-        .user-badge {
-            display: flex; align-items: center; gap: 8px;
-            background: var(--zinc-100); padding: 6px 14px;
-            border-radius: 20px; border: 1px solid var(--zinc-200);
-            font-size: 13px; font-weight: 500; color: var(--zinc-800);
-            cursor: pointer; transition: all 0.2s ease;
-            user-select: none;
+        /* BOTTONE AVATAR CIRCOLARE CON INIZIALE ACCOUNT */
+        .user-avatar-btn {
+            width: 32px; height: 32px; background: var(--primary); color: white; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); user-select: none;
         }
-        .user-badge:hover { background: #fee2e2; border-color: #fca5a5; color: var(--danger); }
-        .user-avatar {
-            width: 24px; height: 24px; background: var(--primary); color: white; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
-        }
+        .user-avatar-btn:hover { background: var(--danger); transform: scale(1.05); }
 
         /* CONTENUTI */
         .main-content { margin-left: 240px; padding: 95px 30px 30px 30px; width: 100%; box-sizing: border-box; }
@@ -86,7 +81,7 @@
         .btn-icon { padding: 10px; background: #f1f5f9; color: var(--zinc-800); font-size: 16px; min-width: 40px; border-radius: 10px; }
         .btn-view { background: var(--primary); color: white; }
         .btn-view:hover { background: #1d4ed8; }
-        .btn-success-action { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(22,163,74,0.2); }
+        .btn-success-action { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(22,163,74,0.15); }
         .btn-success-action:hover { background: #15803d; }
         .btn-del { background: var(--danger); color: white; }
 
@@ -104,14 +99,13 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
         .hidden { display: none !important; }
 
-        /* NUOVA INTERFACCIA RESPONSIVE PER SMARTPHONE (iOS COMPLIANT) */
+        /* INTERFACCIA SMARTPHONE RESPONSIVE (iOS COMPLIANT) */
         @media (max-width: 1024px) {
             body { flex-direction: column; background: var(--zinc-50); }
             
-            /* NASCONDI SIDEBAR DESKTOP */
             .sidebar-header { display: none; }
 
-            /* TRASFORMAZIONE IN BOTTOM NAVIGATION BAR (STILE NATIVO APPLE) */
+            /* BOTTOM TAB BAR PER NAVIGAZIONE COMODA CON IL POLLICE */
             .sidebar { 
                 width: 100%; height: auto; position: fixed; top: auto; bottom: 0; left: 0; right: 0;
                 flex-direction: row; padding: 6px 10px; padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
@@ -128,27 +122,26 @@
                 background: transparent; color: var(--primary); border-left: none; font-weight: 700;
             }
 
-            /* TOP BAR INTEGRATA CON ACCOUNT MEDICO SU MOBILE */
+            /* TOP BAR UNIFICATA PER MOBILE (CON LOGO E AVATAR SULLA STESSA RIGA) */
             .top-navbar { 
                 position: fixed; top: 0; bottom: auto; left: 0; right: 0; height: auto;
-                background: rgba(248, 250, 252, 0.92); backdrop-filter: blur(20px);
+                background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(20px);
                 border-bottom: 1px solid var(--zinc-200); border-top: none;
-                justify-content: flex-end; padding: 10px 16px; padding-top: calc(env(safe-area-inset-top) + 6px);
+                justify-content: space-between; padding: 12px 16px; padding-top: calc(env(safe-area-inset-top) + 10px);
                 box-shadow: none; box-sizing: border-box;
             }
-            .user-badge { background: white; border-color: var(--zinc-200); width: auto; font-size: 12px; padding: 4px 10px; }
 
-            /* MAIN CONTENT CON LOGO INLINE */
+            /* MAIN CONTENT */
             .main-content { 
                 margin-left: 0; 
-                padding: calc(env(safe-area-inset-top) + 65px) 16px calc(env(safe-area-inset-bottom) + 75px) 16px; 
+                padding: calc(env(safe-area-inset-top) + 75px) 16px calc(env(safe-area-inset-bottom) + 75px) 16px; 
             }
             
             .page-header-block { flex-direction: column; align-items: flex-start; gap: 14px; width: 100%; margin-bottom: 18px; }
             .page-title { font-size: 26px; }
             #btn-nuovo-paziente { width: 100%; padding: 14px; font-size: 14px; border-radius: 12px; }
 
-            /* CARDS MOBILE SUPER PULITE */
+            /* SCHEDE DEI PAZIENTI STRUTTURATE E MORBIDE PER LE DITA */
             .pazienti-table thead { display: none; }
             .pazienti-table, .pazienti-table tbody, .pazienti-table tr, .pazienti-table td { display: block; width: 100%; box-sizing: border-box; }
             .pazienti-table tr { 
@@ -183,22 +176,17 @@
 </div>
 
 <div class="top-navbar">
-    <div class="user-badge" id="user-display" style="display:none;" title="Clicca qui per uscire e cambiare account medico">
-        <div class="user-avatar" id="user-avatar-letter">MD</div>
-        <span id="user-email-text">medico@account.it</span>
+    <div class="app-brand-inline">
+        <div class="logo-box-mini">✚</div>
+        <div class="brand-text-mini">MedPro</div>
     </div>
+    <div class="user-avatar-btn" id="user-display" style="display:none;" title="Clicca qui per uscire o cambiare medico">U</div>
 </div>
 
 <div class="main-content">
     <div id="section-dashboard">
         <div class="page-header-block">
-            <div>
-                <div class="app-brand-inline">
-                    <div class="logo-box-mini">✚</div>
-                    <div class="brand-text-mini">MedPro Studio</div>
-                </div>
-                <h1 class="page-title">Dashboard</h1>
-            </div>
+            <h1 class="page-title">Dashboard</h1>
             <button class="btn-success-action" id="btn-nuovo-paziente">+ NUOVO PAZIENTE</button>
         </div>
         <div class="card" style="padding:0; border:none; background:transparent; box-shadow:none;">
@@ -211,13 +199,7 @@
 
     <div id="section-archivio" class="hidden">
         <div class="page-header-block">
-            <div>
-                <div class="app-brand-inline">
-                    <div class="logo-box-mini">✚</div>
-                    <div class="brand-text-mini">MedPro Studio</div>
-                </div>
-                <h1 class="page-title">Archivio</h1>
-            </div>
+            <h1 class="page-title">Archivio</h1>
         </div>
         <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente nell'archivio...">
         <div class="card" style="padding:0; border:none; background:transparent; box-shadow:none;">
@@ -379,11 +361,9 @@
             currentUser = user;
             
             const userDisplay = document.getElementById('user-display');
-            const userEmailText = document.getElementById('user-email-text');
-            const userAvatarLetter = document.getElementById('user-avatar-letter');
             if(userDisplay) {
-                userEmailText.textContent = user.email;
-                userAvatarLetter.textContent = user.email.substring(0, 2).toUpperCase();
+                // Inserisce la prima lettera dell'email maiuscola dentro il cerchio avatar
+                userDisplay.textContent = user.email.substring(0, 1).toUpperCase();
                 userDisplay.style.display = "flex";
             }
 
@@ -614,7 +594,7 @@
 
             const btnDel = document.createElement('button');
             btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
-            btnDel.onclick = (e) => { e.stopPropagation();物理Diagnosi(i); }; // Altro micro refactoring precauzionale su vecchie stringhe
+            btnDel.onclick = (e) => { e.stopPropagation(); eliminaDiagnosi(i); };
 
             row.appendChild(divClick); row.appendChild(btnDel);
             cont.appendChild(row);
@@ -725,7 +705,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.6 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.7 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
