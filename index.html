@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.8 | Clinical Management (Live Search)</title>
+    <title>MEDPRO v17.9 | Clinical Management (Fixed)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -453,7 +453,6 @@
         } catch (e) {}
     }
 
-    // GESTIONE FILTRO DI RICERCA LIVE IN DASHBOARD
     const renderDashboard = () => {
         const q = document.getElementById('cercaDashboard').value.toLowerCase();
         const tbody = document.getElementById('lista-attivi'); tbody.innerHTML = "";
@@ -488,12 +487,12 @@
             btnTog.onclick = () => toggleStato(p.id);
 
             const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑️ Elimina";
-            btnDel.onclick = () => eliminaDefinitivo(p.id);
+            btnDel.onclick = () =>BoxDefinitivo(p.id);
 
             tr.cells[2].appendChild(btnView); tr.cells[2].appendChild(btnTog); tr.cells[2].appendChild(btnDel);
             tbody.appendChild(tr);
         });
-    }
+    };
 
     const toggleStato = async (id, forceOpen=false) => {
         let p = elencoPazientiCache.find(x => x.id === id);
@@ -666,7 +665,7 @@
     }
 
     const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
-    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); border-radius: 10px; } }
+    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); } }
     
     const salvaEChiudi = async (keep=false) => { 
         await salvaPazienteSuCloud(curPz); 
@@ -700,7 +699,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.8 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.9 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -746,7 +745,6 @@
     document.getElementById('user-display').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
     
-    // ASCOLTO DEGLI INPUT DI RICERCA LIVE IN ENTRAMBI I SELETTORI
     document.getElementById('cercaDashboard').onkeyup = renderDashboard;
     document.getElementById('cercaArchivio').onkeyup = renderArchivio;
     
