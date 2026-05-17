@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.3 | Clinical Management (Stabile al 100%)</title>
+    <title>MEDPRO v17.4 | Clinical Management (Sblocco Tasti Nativo)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -73,7 +73,7 @@
         .diag-item.active { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 4px 0 0 var(--primary); }
         
         button { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; background: #e2e8f0 !important; color: #94a3b8 !important; border-color: #cbd5e1 !important; }
         .btn-icon { padding: 8px; background: #f1f5f9; color: var(--zinc-800); font-size: 16px; min-width: 38px; }
         .btn-view { background: var(--primary); color: white; }
         .btn-del { background: var(--danger); color: white; }
@@ -304,12 +304,10 @@
         }
     };
 
-    // LOGICA DI ASCOLTO STATO UTENTE CORRETTA E ASINCRONA
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
             
-            // 1. Mostra le info grafiche del medico loggato
             const userDisplay = document.getElementById('user-display');
             const userEmailText = document.getElementById('user-email-text');
             const userAvatarLetter = document.getElementById('user-avatar-letter');
@@ -319,10 +317,12 @@
                 userDisplay.style.display = "flex";
             }
 
-            // 2. CORREZIONE BUG: Scarica i dati ed esegui il rendering SOLO dopo che l'autenticazione è stabile
+            // Scarica i dati
             await syncDatiDaFirebase();
             
-            // 3. Nascondi lo schermo di login ed entra nell'app solo a scaricamento completato
+            // CORREZIONE BUG: Forza lo sblocco esplicito di tutti i pulsanti dell'app all'avvio
+            setSubmittingState(false);
+            
             document.getElementById('login-screen').classList.add('hidden');
             showSection('dashboard');
         } else {
@@ -336,7 +336,7 @@
 
     // ---- DATA SYNC ----
     async function syncDatiDaFirebase() {
-        if (!auth.currentUser) return; // Impedisce chiamate a vuoto senza credenziali attive
+        if (!auth.currentUser) return;
         try {
             const q = collection(db, "pazienti");
             const querySnapshot = await getDocs(q);
@@ -658,7 +658,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.3 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.4 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
