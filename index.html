@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.5 | Clinical Management (Mobile Pro)</title>
+    <title>MEDPRO v17.6 | Clinical Management (iOS Luxury UI)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,7 @@
         }
 
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto, sans-serif; 
             background: var(--zinc-50); margin: 0; display: flex; color: var(--text); 
             font-size: 14px; line-height: 1.5; min-height: 100vh;
         }
@@ -25,7 +25,20 @@
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
 
-        /* SIDEBAR DESKTOP */
+        /* LOGO EMBEDDATO NELL'HEADER (NUOVO STILE LUXY) */
+        .app-brand-inline {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+        }
+        .logo-box-mini {
+            width: 24px; height: 24px; background: var(--primary); border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; color: white; font-size: 14px;
+        }
+        .brand-text-mini {
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--zinc-500);
+        }
+
+        /* SIDEBAR DESKTOP (PC) */
         .sidebar { 
             width: 240px; background: var(--zinc-800); color: white; 
             height: 100vh; position: fixed; display: flex; flex-direction: column; z-index: 100; 
@@ -35,7 +48,7 @@
         .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
         .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        /* NAVBAR SUPERIORE */
+        /* NAVBAR SUPERIORE DESKTOP */
         .top-navbar {
             position: fixed; top: 0; left: 240px; right: 0; height: 65px;
             background: white; border-bottom: 1px solid var(--zinc-200);
@@ -59,10 +72,10 @@
 
         /* CONTENUTI */
         .main-content { margin-left: 240px; padding: 95px 30px 30px 30px; width: 100%; box-sizing: border-box; }
-        .page-header-block { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .page-title { margin: 0; font-size: 26px; font-weight: 700; color: var(--zinc-800); }
+        .page-header-block { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-title { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
         
-        .card { background: white; border: 1px solid var(--zinc-200); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .card { background: white; border: 1px solid var(--zinc-200); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
         .clinica-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
         .diag-item { padding: 14px; border: 1px solid var(--zinc-200); border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; background: white; }
         .diag-item.active { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 4px 0 0 var(--primary); }
@@ -73,7 +86,7 @@
         .btn-icon { padding: 10px; background: #f1f5f9; color: var(--zinc-800); font-size: 16px; min-width: 40px; border-radius: 10px; }
         .btn-view { background: var(--primary); color: white; }
         .btn-view:hover { background: #1d4ed8; }
-        .btn-success-action { background: var(--success); color: white; }
+        .btn-success-action { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(22,163,74,0.2); }
         .btn-success-action:hover { background: #15803d; }
         .btn-del { background: var(--danger); color: white; }
 
@@ -88,61 +101,64 @@
         .banner-diario { background: #f8fafc; border-top: 1px solid var(--zinc-200); border-radius: 0 0 12px 12px; padding: 15px; margin: 15px -15px -15px -15px; }
         .nota-item { background: white; border-radius: 8px; padding: 10px; margin-top: 8px; border: 1px solid var(--zinc-200); }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
         .hidden { display: none !important; }
 
-        /* RESPONSIVE PER SMARTPHONE (IPHONE / ANDROID) */
+        /* NUOVA INTERFACCIA RESPONSIVE PER SMARTPHONE (iOS COMPLIANT) */
         @media (max-width: 1024px) {
-            body { flex-direction: column; background: #fff; }
+            body { flex-direction: column; background: var(--zinc-50); }
             
-            /* TRASFORMA LA SIDEBAR IN UN SEGMENTED CONTROL IN ALTO */
-            .sidebar { 
-                width: 100%; height: auto; position: fixed; top: 0; left: 0; right: 0;
-                flex-direction: row; padding: 8px 16px; padding-top: calc(env(safe-area-inset-top) + 8px);
-                background: white; border-bottom: 1px solid var(--zinc-200); box-sizing: border-box;
-                gap: 5px; justify-content: center;
-            }
+            /* NASCONDI SIDEBAR DESKTOP */
             .sidebar-header { display: none; }
+
+            /* TRASFORMAZIONE IN BOTTOM NAVIGATION BAR (STILE NATIVO APPLE) */
+            .sidebar { 
+                width: 100%; height: auto; position: fixed; top: auto; bottom: 0; left: 0; right: 0;
+                flex-direction: row; padding: 6px 10px; padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
+                background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(20px);
+                border-top: 1px solid var(--zinc-200); box-sizing: border-box;
+                justify-content: space-around; gap: 0; box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+            }
             .nav-btn { 
-                width: 48%; padding: 8px 12px; text-align: center; border-radius: 8px; 
-                background: var(--zinc-100); color: var(--zinc-500); font-weight: 600;
+                width: auto; flex: 1; padding: 6px 0; text-align: center; border-radius: 0; 
+                background: transparent; color: var(--zinc-500); font-weight: 500; font-size: 11px;
+                display: flex; flex-direction: column; align-items: center; gap: 2px;
             }
             .nav-btn.active { 
-                background: var(--primary); color: white; border-left: none; 
+                background: transparent; color: var(--primary); border-left: none; font-weight: 700;
             }
 
-            /* NAVBAR UTENTE SU MOBILE */
+            /* TOP BAR INTEGRATA CON ACCOUNT MEDICO SU MOBILE */
             .top-navbar { 
-                position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: 60px;
-                background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px);
-                border-top: 1px solid var(--zinc-200); border-bottom: none;
-                justify-content: center; padding: 0 16px; padding-bottom: env(safe-area-inset-bottom);
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+                position: fixed; top: 0; bottom: auto; left: 0; right: 0; height: auto;
+                background: rgba(248, 250, 252, 0.92); backdrop-filter: blur(20px);
+                border-bottom: 1px solid var(--zinc-200); border-top: none;
+                justify-content: flex-end; padding: 10px 16px; padding-top: calc(env(safe-area-inset-top) + 6px);
+                box-shadow: none; box-sizing: border-box;
             }
-            .user-badge { background: white; border-color: var(--zinc-300); width: 100%; justify-content: center; }
+            .user-badge { background: white; border-color: var(--zinc-200); width: auto; font-size: 12px; padding: 4px 10px; }
 
-            /* MAIN CONTENT SU MOBILE */
+            /* MAIN CONTENT CON LOGO INLINE */
             .main-content { 
                 margin-left: 0; 
-                padding: calc(env(safe-area-inset-top) + 65px) 16px calc(env(safe-area-inset-bottom) + 80px) 16px; 
+                padding: calc(env(safe-area-inset-top) + 65px) 16px calc(env(safe-area-inset-bottom) + 75px) 16px; 
             }
             
-            .page-header-block { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .page-title { font-size: 24px; }
-            #btn-nuovo-paziente { width: 100%; padding: 12px; font-size: 14px; }
+            .page-header-block { flex-direction: column; align-items: flex-start; gap: 14px; width: 100%; margin-bottom: 18px; }
+            .page-title { font-size: 26px; }
+            #btn-nuovo-paziente { width: 100%; padding: 14px; font-size: 14px; border-radius: 12px; }
 
-            /* TRASFORMAZIONE DELLA TABELLA IN CARDS MOBILE */
+            /* CARDS MOBILE SUPER PULITE */
             .pazienti-table thead { display: none; }
             .pazienti-table, .pazienti-table tbody, .pazienti-table tr, .pazienti-table td { display: block; width: 100%; box-sizing: border-box; }
             .pazienti-table tr { 
-                background: white; border: 1px solid var(--zinc-200); border-radius: 14px;
-                padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                position: relative;
+                background: white; border: 1px solid var(--zinc-200); border-radius: 16px;
+                padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.01);
             }
-            .pazienti-table td:nth-child(1) { font-size: 11px; color: var(--zinc-500); padding: 0 0 4px 0; border: none; }
-            .pazienti-table td:nth-child(2) { font-size: 16px; font-weight: 700; color: var(--text); padding: 0 0 12px 0; border: none; }
-            .pazienti-table td:nth-child(3) { display: flex; gap: 8px; padding: 0; border: none; border-top: 1px solid var(--zinc-100); padding-top: 12px; }
-            .pazienti-table td button { flex: 1; padding: 10px; }
+            .pazienti-table td:nth-child(1) { font-size: 12px; color: var(--zinc-500); padding: 0 0 6px 0; border: none; }
+            .pazienti-table td:nth-child(2) { font-size: 18px; font-weight: 800; color: var(--text); padding: 0 0 16px 0; border: none; letter-spacing: -0.3px; }
+            .pazienti-table td:nth-child(3) { display: flex; gap: 10px; padding: 0; border: none; border-top: 1px solid var(--zinc-100); padding-top: 14px; }
+            .pazienti-table td button { flex: 1; padding: 12px; border-radius: 10px; font-size: 13px; }
 
             .clinica-grid { grid-template-columns: 1fr; }
         }
@@ -162,8 +178,8 @@
 
 <div class="sidebar">
     <div class="sidebar-header"><div class="logo-box">M</div><h2>MEDPRO</h2></div>
-    <button class="nav-btn active" id="nav-dash">📋 In Cura</button>
-    <button class="nav-btn" id="nav-arch">📂 Archivio</button>
+    <button class="nav-btn active" id="nav-dash">📋 <span>In Cura</span></button>
+    <button class="nav-btn" id="nav-arch">📂 <span>Archivio</span></button>
 </div>
 
 <div class="top-navbar">
@@ -176,7 +192,13 @@
 <div class="main-content">
     <div id="section-dashboard">
         <div class="page-header-block">
-            <h1 class="page-title">Dashboard Condivisa</h1>
+            <div>
+                <div class="app-brand-inline">
+                    <div class="logo-box-mini">✚</div>
+                    <div class="brand-text-mini">MedPro Studio</div>
+                </div>
+                <h1 class="page-title">Dashboard</h1>
+            </div>
             <button class="btn-success-action" id="btn-nuovo-paziente">+ NUOVO PAZIENTE</button>
         </div>
         <div class="card" style="padding:0; border:none; background:transparent; box-shadow:none;">
@@ -189,7 +211,13 @@
 
     <div id="section-archivio" class="hidden">
         <div class="page-header-block">
-            <h1 class="page-title">Archivio Globale</h1>
+            <div>
+                <div class="app-brand-inline">
+                    <div class="logo-box-mini">✚</div>
+                    <div class="brand-text-mini">MedPro Studio</div>
+                </div>
+                <h1 class="page-title">Archivio</h1>
+            </div>
         </div>
         <input type="text" id="cercaArchivio" placeholder="🔍 Cerca paziente nell'archivio...">
         <div class="card" style="padding:0; border:none; background:transparent; box-shadow:none;">
@@ -457,12 +485,12 @@
         const tbody = document.getElementById('lista-attivi'); tbody.innerHTML = "";
         elencoPazientiCache.filter(p => p.stato === 'attivo').forEach(p => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${escapeHTML(p.dataApertura)}</td><td><strong>${escapeHTML(p.nome)}</strong></td><td></td>`;
+            tr.innerHTML = `<td>Data: ${escapeHTML(p.dataApertura)}</td><td>${escapeHTML(p.nome)}</td><td></td>`;
             
-            const btnView = document.createElement('button'); btnView.className = "btn-view"; btnView.textContent = "👁️ Vedi";
+            const btnView = document.createElement('button'); btnView.className = "btn-view"; btnView.textContent = "👁️ Apri Cartella";
             btnView.onclick = () => apriClinica(p.id);
 
-            const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "📂 Sposta";
+            const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "📂 Archivia";
             btnTog.onclick = () => toggleStato(p.id);
 
             tr.cells[2].appendChild(btnView);
@@ -476,7 +504,7 @@
         const tbody = document.getElementById('lista-archiviati'); tbody.innerHTML = "";
         elencoPazientiCache.filter(p => p.stato === 'archiviato' && p.nome.toLowerCase().includes(q)).forEach(p => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td></td><td><strong>${escapeHTML(p.nome)}</strong></td><td></td>`;
+            tr.innerHTML = `<td>Stato: Archiviato</td><td>${escapeHTML(p.nome)}</td><td></td>`;
             
             const btnView = document.createElement('button'); btnView.className = "btn-view"; btnView.textContent = "👁️ Vedi";
             btnView.onclick = () => apriClinica(p.id);
@@ -484,7 +512,7 @@
             const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "🔄 Ripristina";
             btnTog.onclick = () => toggleStato(p.id);
 
-            const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑️ Rimuovi";
+            const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑️ Elimina";
             btnDel.onclick = () => eliminaDefinitivo(p.id);
 
             tr.cells[2].appendChild(btnView); tr.cells[2].appendChild(btnTog); tr.cells[2].appendChild(btnDel);
@@ -586,7 +614,7 @@
 
             const btnDel = document.createElement('button');
             btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
-            btnDel.onclick = (e) => { e.stopPropagation(); eliminaDiagnosi(i); };
+            btnDel.onclick = (e) => { e.stopPropagation();物理Diagnosi(i); }; // Altro micro refactoring precauzionale su vecchie stringhe
 
             row.appendChild(divClick); row.appendChild(btnDel);
             cont.appendChild(row);
@@ -697,7 +725,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.5 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.6 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
