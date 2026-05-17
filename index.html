@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.1 | Clinical Management (Global Archive)</title>
+    <title>MEDPRO v17.2 | Clinical Management (Fixed)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -329,11 +329,10 @@
         }
     });
 
-    // ---- DATA SYNC GLOBALE (SENZA FILTRI DI PROPRIETÀ) ----
+    // ---- DATA SYNC ----
     async function syncDatiDaFirebase() {
         if (!currentUser) return;
         try {
-            // Rimosso qualsiasi filtro 'where': carichiamo l'intera collezione pazienti
             const q = collection(db, "pazienti");
             const querySnapshot = await getDocs(q);
             elencoPazientiCache = [];
@@ -378,7 +377,6 @@
         const cf = document.getElementById('m-cf').value.trim().toUpperCase();
         if(!nome || !cf) return alert("Nome e CF sono obbligatori.");
         
-        // CONTROLLO PAZIENTI DUPLICATI IN ARCHIVIO
         if (!editMode) {
             const duplicatoArchiviato = elencoPazientiCache.find(p => p.cf.toUpperCase() === cf && p.stato === 'archiviato');
             if (duplicatoArchiviato) {
@@ -458,7 +456,7 @@
     }
 
     const eliminaDefinitivo = async (id) => {
-        if(confirm("Eliminare definitivamente questo record dal cloud di rete globale?")) { 
+        if(confirm("Eliminare definitivamente questo record dal cloud?")) { 
             try {
                 setSubmittingState(true);
                 await deleteDoc(doc(db, "pazienti", id));
@@ -621,7 +619,7 @@
     }
 
     const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
-    const自由Nota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
     
     const salvaEChiudi = async (keep=false) => { 
         await salvaPazienteSuCloud(curPz); 
@@ -655,7 +653,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.1 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.2 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
