@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.7 | Clinical Management (iOS Native Header)</title>
+    <title>MEDPRO v17.8 | Clinical Management (Live Search)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,7 +25,6 @@
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
 
-        /* LOGO MEDPRO MINIMALE */
         .app-brand-inline {
             display: flex; align-items: center; gap: 8px;
         }
@@ -38,7 +37,7 @@
             font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
         }
 
-        /* SIDEBAR DESKTOP (PC) */
+        /* SIDEBAR DESKTOP */
         .sidebar { 
             width: 240px; background: var(--zinc-800); color: white; 
             height: 100vh; position: fixed; display: flex; flex-direction: column; z-index: 100; 
@@ -48,7 +47,7 @@
         .nav-btn { padding: 15px 20px; cursor: pointer; color: #94a3b8; border:none; background:none; width:100%; text-align:left; font-size: 14px; transition: 0.2s; }
         .nav-btn.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
 
-        /* NAVBAR SUPERIORE UNIFICATA (PC) */
+        /* NAVBAR SUPERIORE */
         .top-navbar {
             position: fixed; top: 0; left: 240px; right: 0; height: 65px;
             background: white; border-bottom: 1px solid var(--zinc-200);
@@ -56,7 +55,6 @@
             padding: 0 30px; box-sizing: border-box; z-index: 90;
         }
         
-        /* BOTTONE AVATAR CIRCOLARE CON INIZIALE ACCOUNT */
         .user-avatar-btn {
             width: 32px; height: 32px; background: var(--primary); color: white; 
             border-radius: 50%; display: flex; align-items: center; justify-content: center; 
@@ -99,13 +97,10 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
         .hidden { display: none !important; }
 
-        /* INTERFACCIA SMARTPHONE RESPONSIVE (iOS COMPLIANT) */
         @media (max-width: 1024px) {
             body { flex-direction: column; background: var(--zinc-50); }
-            
             .sidebar-header { display: none; }
 
-            /* BOTTOM TAB BAR PER NAVIGAZIONE COMODA CON IL POLLICE */
             .sidebar { 
                 width: 100%; height: auto; position: fixed; top: auto; bottom: 0; left: 0; right: 0;
                 flex-direction: row; padding: 6px 10px; padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
@@ -122,7 +117,6 @@
                 background: transparent; color: var(--primary); border-left: none; font-weight: 700;
             }
 
-            /* TOP BAR UNIFICATA PER MOBILE (CON LOGO E AVATAR SULLA STESSA RIGA) */
             .top-navbar { 
                 position: fixed; top: 0; bottom: auto; left: 0; right: 0; height: auto;
                 background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(20px);
@@ -131,7 +125,6 @@
                 box-shadow: none; box-sizing: border-box;
             }
 
-            /* MAIN CONTENT */
             .main-content { 
                 margin-left: 0; 
                 padding: calc(env(safe-area-inset-top) + 75px) 16px calc(env(safe-area-inset-bottom) + 75px) 16px; 
@@ -141,7 +134,6 @@
             .page-title { font-size: 26px; }
             #btn-nuovo-paziente { width: 100%; padding: 14px; font-size: 14px; border-radius: 12px; }
 
-            /* SCHEDE DEI PAZIENTI STRUTTURATE E MORBIDE PER LE DITA */
             .pazienti-table thead { display: none; }
             .pazienti-table, .pazienti-table tbody, .pazienti-table tr, .pazienti-table td { display: block; width: 100%; box-sizing: border-box; }
             .pazienti-table tr { 
@@ -189,6 +181,7 @@
             <h1 class="page-title">Dashboard</h1>
             <button class="btn-success-action" id="btn-nuovo-paziente">+ NUOVO PAZIENTE</button>
         </div>
+        <input type="text" id="cercaDashboard" placeholder="🔍 Cerca paziente in cura...">
         <div class="card" style="padding:0; border:none; background:transparent; box-shadow:none;">
             <table class="pazienti-table">
                 <thead><tr><th>Data</th><th>Nominativo</th><th>Azioni</th></tr></thead>
@@ -362,7 +355,6 @@
             
             const userDisplay = document.getElementById('user-display');
             if(userDisplay) {
-                // Inserisce la prima lettera dell'email maiuscola dentro il cerchio avatar
                 userDisplay.textContent = user.email.substring(0, 1).toUpperCase();
                 userDisplay.style.display = "flex";
             }
@@ -461,9 +453,12 @@
         } catch (e) {}
     }
 
+    // GESTIONE FILTRO DI RICERCA LIVE IN DASHBOARD
     const renderDashboard = () => {
+        const q = document.getElementById('cercaDashboard').value.toLowerCase();
         const tbody = document.getElementById('lista-attivi'); tbody.innerHTML = "";
-        elencoPazientiCache.filter(p => p.stato === 'attivo').forEach(p => {
+        
+        elencoPazientiCache.filter(p => p.stato === 'attivo' && p.nome.toLowerCase().includes(q)).forEach(p => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>Data: ${escapeHTML(p.dataApertura)}</td><td>${escapeHTML(p.nome)}</td><td></td>`;
             
@@ -671,7 +666,7 @@
     }
 
     const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
-    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); renderImbuto(); } }
+    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); border-radius: 10px; } }
     
     const salvaEChiudi = async (keep=false) => { 
         await salvaPazienteSuCloud(curPz); 
@@ -705,7 +700,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.7 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.8 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -750,6 +745,9 @@
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
     document.getElementById('user-display').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
+    
+    // ASCOLTO DEGLI INPUT DI RICERCA LIVE IN ENTRAMBI I SELETTORI
+    document.getElementById('cercaDashboard').onkeyup = renderDashboard;
     document.getElementById('cercaArchivio').onkeyup = renderArchivio;
     
     document.getElementById('btn-esci-clinica').onclick = () => showSection('dashboard');
