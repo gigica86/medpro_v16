@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v18.0 | Clinical Management (Fixed & Improved)</title>
+    <title>MEDPRO v18.1 | Clinical Management (Diagnosis Navigation)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -84,7 +84,7 @@
         .pazienti-table th { text-align: left; padding: 12px; font-size: 11px; color: var(--zinc-500); text-transform: uppercase; border-bottom: 2px solid var(--zinc-100); }
         .pazienti-table td { padding: 14px 12px; border-bottom: 1px solid var(--zinc-100); }
 
-        /* NUOVA STRUTTURA DIARIO AD ACCORDION (TENDINA) */
+        /* DIARIO AD ACCORDION (TENDINA) */
         .piano-box { border: 1px solid var(--zinc-200); border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fff; }
         .banner-diario { background: #f8fafc; border-top: 1px solid var(--zinc-200); border-radius: 0 0 12px 12px; padding: 15px; margin: 15px -15px -15px -15px; }
         
@@ -217,6 +217,8 @@
             </div>
             <div id="area-focus" class="hidden">
                 <div class="card" style="border-top: 4px solid var(--primary);">
+                    <button id="btn-chiudi-focus" class="btn-del" style="background: var(--zinc-100); color: var(--zinc-800); margin-bottom: 15px; width: 100%; justify-content: flex-start;">← CHIUDI DETTAGLI</button>
+                    
                     <h2 id="focus-titolo" style="margin-bottom:5px;">--</h2>
                     <div id="focus-sintesi" style="background:var(--zinc-100); padding:10px; border-radius:8px; margin-bottom:20px; font-style:italic; color:var(--zinc-800); border-left: 3px solid var(--zinc-500);"></div>
                     
@@ -459,14 +461,13 @@
             tr.innerHTML = `<td>Stato: Archiviato</td><td>${escapeHTML(p.nome)}</td><td></td>`;
             
             const btnView = document.createElement('button'); btnView.className = "btn-view"; btnView.textContent = "👁️ Vedi";
-            winStampa.document.close(); // Ignorare: residuo grafico stampa corretto sotto
             btnView.onclick = () => apriClinica(p.id);
 
             const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "🔄 Ripristina";
             btnTog.onclick = () => { setSubmittingState(true); toggleStato(p.id).finally(() => setSubmittingState(false)); };
 
-            const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑 Tangibile";
-            btnDel.onclick = () => eliminaDefinitivo(p.id);
+            const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑️ Elimina";
+            btnDel.onclick = () => eliminaDefinitivo(p.id); // Bugfix ripristinato nome corretto
 
             tr.cells[2].appendChild(btnView); tr.cells[2].appendChild(btnTog); tr.cells[2].appendChild(btnDel);
             tbody.appendChild(tr);
@@ -582,7 +583,6 @@
 
     const toggleDiarioBanner = (pIdx) => { openDiarioIdx = (openDiarioIdx === pIdx) ? null : pIdx; renderImbuto(); }
 
-    // RENDER INTERFACCIA CON TENDINA ACCORDION SUL DIARIO
     const renderImbuto = () => {
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
         curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
@@ -607,7 +607,6 @@
                     <div id="diario-list-${pIdx}">`;
             
             p.diario.forEach((n, nIdx) => {
-                // STRUTTURA AD ACCORDION (TENDINA CLICCABILE)
                 html += `
                 <div class="nota-item-container" id="container-nota-${pIdx}-${nIdx}">
                     <div class="nota-header-click" id="trigger-expand-${pIdx}-${nIdx}">
@@ -624,7 +623,6 @@
             
             const wrap = document.createElement('div'); wrap.innerHTML = html; cont.appendChild(wrap);
 
-            // EVENTI INTERFACCIA DIARIO
             document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
             document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
             
@@ -637,13 +635,11 @@
                 document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
                 
                 p.diario.forEach((n, nIdx) => {
-                    // INTERCETTATORE APERTURA TENDINA NOTA
-                    document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = (e) => {
+                    document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = () => {
                         document.getElementById(`container-nota-${pIdx}-${nIdx}`).classList.toggle('expanded');
                     };
-                    // PULSANTE CANCELLAZIONE NOTA DIARIO FISSO
                     document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = (e) => {
-                        e.stopPropagation(); // Evita di aprire la tendina mentre si cancella
+                        e.stopPropagation();
                         eliminaNota(pIdx, nIdx);
                     };
                 });
@@ -697,7 +693,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.0 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.1 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -733,8 +729,10 @@
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
     document.getElementById('user-display').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
+    
     document.getElementById('cercaDashboard').onkeyup = renderDashboard;
     document.getElementById('cercaArchivio').onkeyup = renderArchivio;
+    
     document.getElementById('btn-esci-clinica').onclick = () => showSection('dashboard');
     document.getElementById('btn-ripristina-clinica').onclick = () => toggleStato(curPz.id, true);
     document.getElementById('btn-stampa-clinica').onclick = generaStampa;
@@ -742,6 +740,14 @@
     document.getElementById('btn-edit-anagrafica').onclick = () => apriModalPaziente(true);
     document.getElementById('btn-apri-modal-diagnosi').onclick = () => document.getElementById('modal-diagnosi').classList.remove('hidden');
     document.getElementById('btn-apri-modal-piano').onclick = () => document.getElementById('modal-piano').classList.remove('hidden');
+    
+    // AZIONE DI CHIUSURA FOCUS DIAGNOSI IN CLOUD
+    document.getElementById('btn-chiudi-focus').onclick = () => {
+        document.getElementById('area-focus').classList.add('hidden');
+        curDiagIdx = null;
+        renderDiagnosi(); // Aggiorna graficamente lo stato attivo deselezionandolo
+    };
+    
     document.getElementById('btn-salva-anagrafica').onclick = salvaAnagrafica;
     document.getElementById('btn-salva-diagnosi').onclick = salvaDiagnosi;
     document.getElementById('btn-crea-piano').onclick = salvaPiano;
