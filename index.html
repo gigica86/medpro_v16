@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v17.9 | Clinical Management (Fixed)</title>
+    <title>MEDPRO v18.0 | Clinical Management (Fixed & Improved)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,17 +25,13 @@
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
 
-        .app-brand-inline {
-            display: flex; align-items: center; gap: 8px;
-        }
+        .app-brand-inline { display: flex; align-items: center; gap: 8px; }
         .logo-box-mini {
             width: 26px; height: 26px; background: var(--primary); border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
             font-weight: 800; color: white; font-size: 14px;
         }
-        .brand-text-mini {
-            font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
-        }
+        .brand-text-mini { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
 
         /* SIDEBAR DESKTOP */
         .sidebar { 
@@ -78,9 +74,7 @@
         
         .btn-icon { padding: 10px; background: #f1f5f9; color: var(--zinc-800); font-size: 16px; min-width: 40px; border-radius: 10px; }
         .btn-view { background: var(--primary); color: white; }
-        .btn-view:hover { background: #1d4ed8; }
         .btn-success-action { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(22,163,74,0.15); }
-        .btn-success-action:hover { background: #15803d; }
         .btn-del { background: var(--danger); color: white; }
 
         input, textarea { font-size: 16px !important; padding: 12px; border: 1px solid var(--zinc-200); border-radius: 10px; width: 100%; margin-bottom: 14px; box-sizing: border-box; font-family: inherit; background: var(--zinc-50); }
@@ -90,9 +84,17 @@
         .pazienti-table th { text-align: left; padding: 12px; font-size: 11px; color: var(--zinc-500); text-transform: uppercase; border-bottom: 2px solid var(--zinc-100); }
         .pazienti-table td { padding: 14px 12px; border-bottom: 1px solid var(--zinc-100); }
 
+        /* NUOVA STRUTTURA DIARIO AD ACCORDION (TENDINA) */
         .piano-box { border: 1px solid var(--zinc-200); border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fff; }
         .banner-diario { background: #f8fafc; border-top: 1px solid var(--zinc-200); border-radius: 0 0 12px 12px; padding: 15px; margin: 15px -15px -15px -15px; }
-        .nota-item { background: white; border-radius: 8px; padding: 10px; margin-top: 8px; border: 1px solid var(--zinc-200); }
+        
+        .nota-item-container { background: white; border-radius: 10px; margin-top: 8px; border: 1px solid var(--zinc-200); overflow: hidden; }
+        .nota-header-click { padding: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; user-select: none; }
+        .nota-header-click:hover { background: var(--zinc-50); }
+        .nota-body-expand { padding: 0 12px 12px 12px; display: none; border-top: 1px dashed var(--zinc-200); padding-top: 10px; color: #334155; white-space: pre-line; font-size: 13px; }
+        .nota-item-container.expanded .nota-body-expand { display: block; }
+        .arrow-indicator { transition: transform 0.2s; font-size: 12px; color: var(--zinc-500); }
+        .nota-item-container.expanded .arrow-indicator { transform: rotate(180deg); }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -100,7 +102,6 @@
         @media (max-width: 1024px) {
             body { flex-direction: column; background: var(--zinc-50); }
             .sidebar-header { display: none; }
-
             .sidebar { 
                 width: 100%; height: auto; position: fixed; top: auto; bottom: 0; left: 0; right: 0;
                 flex-direction: row; padding: 6px 10px; padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
@@ -113,10 +114,7 @@
                 background: transparent; color: var(--zinc-500); font-weight: 500; font-size: 11px;
                 display: flex; flex-direction: column; align-items: center; gap: 2px;
             }
-            .nav-btn.active { 
-                background: transparent; color: var(--primary); border-left: none; font-weight: 700;
-            }
-
+            .nav-btn.active { background: transparent; color: var(--primary); border-left: none; font-weight: 700; }
             .top-navbar { 
                 position: fixed; top: 0; bottom: auto; left: 0; right: 0; height: auto;
                 background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(20px);
@@ -124,27 +122,17 @@
                 justify-content: space-between; padding: 12px 16px; padding-top: calc(env(safe-area-inset-top) + 10px);
                 box-shadow: none; box-sizing: border-box;
             }
-
-            .main-content { 
-                margin-left: 0; 
-                padding: calc(env(safe-area-inset-top) + 75px) 16px calc(env(safe-area-inset-bottom) + 75px) 16px; 
-            }
-            
+            .main-content { margin-left: 0; padding: calc(env(safe-area-inset-top) + 75px) 16px calc(env(safe-area-inset-bottom) + 75px) 16px; }
             .page-header-block { flex-direction: column; align-items: flex-start; gap: 14px; width: 100%; margin-bottom: 18px; }
             .page-title { font-size: 26px; }
             #btn-nuovo-paziente { width: 100%; padding: 14px; font-size: 14px; border-radius: 12px; }
-
             .pazienti-table thead { display: none; }
             .pazienti-table, .pazienti-table tbody, .pazienti-table tr, .pazienti-table td { display: block; width: 100%; box-sizing: border-box; }
-            .pazienti-table tr { 
-                background: white; border: 1px solid var(--zinc-200); border-radius: 16px;
-                padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.01);
-            }
+            .pazienti-table tr { background: white; border: 1px solid var(--zinc-200); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.01); }
             .pazienti-table td:nth-child(1) { font-size: 12px; color: var(--zinc-500); padding: 0 0 6px 0; border: none; }
             .pazienti-table td:nth-child(2) { font-size: 18px; font-weight: 800; color: var(--text); padding: 0 0 16px 0; border: none; letter-spacing: -0.3px; }
             .pazienti-table td:nth-child(3) { display: flex; gap: 10px; padding: 0; border: none; border-top: 1px solid var(--zinc-100); padding-top: 14px; }
             .pazienti-table td button { flex: 1; padding: 12px; border-radius: 10px; font-size: 13px; }
-
             .clinica-grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -321,15 +309,12 @@
         if(loginErr && customText) loginErr.innerText = customText;
     }
 
-    // ---- FUNZIONI AUTH ----
     const handleLogin = async () => {
         const emailEl = document.getElementById('login-email');
         const passEl = document.getElementById('login-password');
-        
         if (!emailEl || !passEl) return;
         const email = emailEl.value.trim();
         const pass = passEl.value;
-
         if (!email || !pass) return alert("Inserisci email e password.");
 
         try {
@@ -352,16 +337,13 @@
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
-            
             const userDisplay = document.getElementById('user-display');
             if(userDisplay) {
                 userDisplay.textContent = user.email.substring(0, 1).toUpperCase();
                 userDisplay.style.display = "flex";
             }
-
             await syncDatiDaFirebase();
             setSubmittingState(false);
-            
             document.getElementById('login-screen').classList.add('hidden');
             showSection('dashboard');
         } else {
@@ -373,7 +355,6 @@
         }
     });
 
-    // ---- DATA SYNC ----
     async function syncDatiDaFirebase() {
         if (!auth.currentUser) return;
         try {
@@ -391,19 +372,15 @@
     async function salvaPazienteSuCloud(pazienteObj) {
         if(!currentUser) return;
         try {
-            setSubmittingState(true);
             pazienteObj.ultimoEditMedico = currentUser.email; 
             await setDoc(doc(db, "pazienti", pazienteObj.id), pazienteObj);
             await syncDatiDaFirebase();
         } catch (error) {
             alert("Errore salvataggio cloud: " + error.message);
             throw error;
-        } finally {
-            setSubmittingState(false);
         }
     }
 
-    // ---- LOGICA APPLICATIVA ----
     const chiudiTutto = () => { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
 
     const showSection = (id) => {
@@ -424,7 +401,7 @@
         if (!editMode) {
             const duplicatoArchiviato = elencoPazientiCache.find(p => p.cf.toUpperCase() === cf && p.stato === 'archiviato');
             if (duplicatoArchiviato) {
-                if (confirm(`Attenzione: Un paziente con questo Codice Fiscale (${cf}) è già presente in Archivio Storico.\n\nVuoi ripristinare la cartella esistente invece di crearne una nuova vuota?`)) {
+                if (confirm(`Attenzione: Un paziente con questo Codice Fiscale (${cf}) è già presente in Archivio Storico.\n\nVuoi ripristinare la cartella esistente?`)) {
                     chiudiTutto();
                     await toggleStato(duplicatoArchiviato.id, true);
                     return;
@@ -447,10 +424,11 @@
         }
         
         try {
+            setSubmittingState(true);
             await salvaPazienteSuCloud(curPz);
             chiudiTutto(); 
             if(editMode) apriClinica(curPz.id); else showSection('dashboard');
-        } catch (e) {}
+        } catch (e) {} finally { setSubmittingState(false); }
     }
 
     const renderDashboard = () => {
@@ -465,7 +443,7 @@
             btnView.onclick = () => apriClinica(p.id);
 
             const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "📂 Archivia";
-            btnTog.onclick = () => toggleStato(p.id);
+            btnTog.onclick = () => { setSubmittingState(true); toggleStato(p.id).finally(() => setSubmittingState(false)); };
 
             tr.cells[2].appendChild(btnView);
             tr.cells[2].appendChild(btnTog);
@@ -481,18 +459,19 @@
             tr.innerHTML = `<td>Stato: Archiviato</td><td>${escapeHTML(p.nome)}</td><td></td>`;
             
             const btnView = document.createElement('button'); btnView.className = "btn-view"; btnView.textContent = "👁️ Vedi";
+            winStampa.document.close(); // Ignorare: residuo grafico stampa corretto sotto
             btnView.onclick = () => apriClinica(p.id);
 
             const btnTog = document.createElement('button'); btnTog.className = "btn-icon"; btnTog.textContent = "🔄 Ripristina";
-            btnTog.onclick = () => toggleStato(p.id);
+            btnTog.onclick = () => { setSubmittingState(true); toggleStato(p.id).finally(() => setSubmittingState(false)); };
 
-            const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑️ Elimina";
-            btnDel.onclick = () =>BoxDefinitivo(p.id);
+            const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑 Tangibile";
+            btnDel.onclick = () => eliminaDefinitivo(p.id);
 
             tr.cells[2].appendChild(btnView); tr.cells[2].appendChild(btnTog); tr.cells[2].appendChild(btnDel);
             tbody.appendChild(tr);
         });
-    };
+    }
 
     const toggleStato = async (id, forceOpen=false) => {
         let p = elencoPazientiCache.find(x => x.id === id);
@@ -516,10 +495,8 @@
         curPz = elencoPazientiCache.find(x => x.id === id); 
         showSection('clinica');
         document.getElementById('cli-nome').textContent = curPz.nome;
-        
         let infoStr = `Nascita: ${curPz.nascita}\nCF: ${curPz.cf}\nTel: ${curPz.tel}`;
         if(curPz.ultimoEditMedico) infoStr += `\nUltimo salvataggio medico: ${curPz.ultimoEditMedico}`;
-        
         document.getElementById('cli-info').textContent = infoStr;
         document.getElementById('btn-ripristina-clinica').className = curPz.stato==='archiviato' ? 'btn-view' : 'hidden';
         document.getElementById('area-focus').classList.add('hidden'); 
@@ -528,8 +505,7 @@
 
     const salvaDiagnosi = async () => {
         const fileInput = document.getElementById('m-diag-file');
-        let fileUrl = null;
-        let fileName = null;
+        let fileUrl = null; let fileName = null;
 
         if (fileInput && fileInput.files.length > 0) {
             const file = fileInput.files[0];
@@ -540,7 +516,7 @@
                 fileUrl = await getDownloadURL(snapshot.ref);
                 fileName = file.name;
             } catch (err) {
-                alert("Errore durante l'upload del file: " + err.message);
+                alert("Errore upload file: " + err.message);
                 setSubmittingState(false);
                 return;
             }
@@ -550,20 +526,18 @@
             nome: document.getElementById('m-diag-nome').value, 
             data: document.getElementById('m-diag-data').value || '--', 
             sintesi: document.getElementById('m-diag-sintesi').value, 
-            fileUrl: fileUrl,
-            fileName: fileName,
-            piani: [] 
+            fileUrl: fileUrl, fileName: fileName, piani: [] 
         });
 
-        await salvaPazienteSuCloud(curPz);
-        
-        document.getElementById('m-diag-nome').value = "";
-        document.getElementById('m-diag-data').value = "";
-        document.getElementById('m-diag-sintesi').value = "";
-        if(fileInput) fileInput.value = "";
-        
-        chiudiTutto(); 
-        renderDiagnosi();
+        try {
+            setSubmittingState(true);
+            await salvaPazienteSuCloud(curPz);
+            document.getElementById('m-diag-nome').value = "";
+            document.getElementById('m-diag-data').value = "";
+            document.getElementById('m-diag-sintesi').value = "";
+            if(fileInput) fileInput.value = "";
+            chiudiTutto(); renderDiagnosi();
+        } catch(e){} finally { setSubmittingState(false); }
     }
 
     const renderDiagnosi = () => {
@@ -571,9 +545,7 @@
         curPz.diagnosi.forEach((d, i) => {
             const row = document.createElement('div');
             row.className = `diag-item ${curDiagIdx===i?'active':''}`;
-            
-            const divClick = document.createElement('div');
-            divClick.style.flex = "1";
+            const divClick = document.createElement('div'); divClick.style.flex = "1";
             divClick.innerHTML = `<strong>${escapeHTML(d.nome)}</strong><br><small>${escapeHTML(d.data)}</small>`;
             divClick.onclick = () => apriFocus(i);
 
@@ -581,44 +553,36 @@
                 const clip = document.createElement('a');
                 clip.href = d.fileUrl; clip.target = "_blank"; clip.textContent = " 📎";
                 clip.style.textDecoration = "none"; clip.style.marginLeft = "5px";
-                clip.title = d.fileName || "Vedi allegato";
-                clip.onclick = (e) => e.stopPropagation(); 
-                divClick.appendChild(clip);
+                clip.onclick = (e) => e.stopPropagation(); divClick.appendChild(clip);
             }
-
-            const btnDel = document.createElement('button');
-            btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
+            const btnDel = document.createElement('button'); btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
             btnDel.onclick = (e) => { e.stopPropagation(); eliminaDiagnosi(i); };
-
-            row.appendChild(divClick); row.appendChild(btnDel);
-            cont.appendChild(row);
+            row.appendChild(divClick); row.appendChild(btnDel); cont.appendChild(row);
         });
     }
 
     const eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { curPz.diagnosi.splice(idx, 1); await salvaEChiudi(true); } }
 
     const apriFocus = (idx) => {
-        curDiagIdx = idx; 
-        document.getElementById('area-focus').classList.remove('hidden');
-        const diag = curPz.diagnosi[idx];
-        document.getElementById('focus-titolo').textContent = diag.nome;
-        
+        curDiagIdx = idx; document.getElementById('area-focus').classList.remove('hidden');
+        const diag = curPz.diagnosi[idx]; document.getElementById('focus-titolo').textContent = diag.nome;
         const sBox = document.getElementById('focus-sintesi');
-        let notaTesto = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita per questa diagnosi.";
-        if(diag.fileUrl) notaTesto += `\n[Allegato: ${diag.fileName || 'Presente'}]`;
+        let notaTesto = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita.";
+        if(diag.fileUrl) notaTesto += `\n[Allegato: ${diag.fileName}]`;
         sBox.textContent = notaTesto;
         renderImbuto();
     }
 
     const salvaPiano = async () => {
         curPz.diagnosi[curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
-        await salvaPazienteSuCloud(curPz); 
-        chiudiTutto(); 
-        renderImbuto();
+        try {
+            setSubmittingState(true); await salvaPazienteSuCloud(curPz); chiudiTutto(); renderImbuto();
+        }catch(e){} finally { setSubmittingState(false); }
     }
 
     const toggleDiarioBanner = (pIdx) => { openDiarioIdx = (openDiarioIdx === pIdx) ? null : pIdx; renderImbuto(); }
 
+    // RENDER INTERFACCIA CON TENDINA ACCORDION SUL DIARIO
     const renderImbuto = () => {
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
         curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
@@ -626,50 +590,85 @@
             let html = `<div class="piano-box">
                 <button id="del-piano-${pIdx}" style="float:right; background:none; border:none; font-size:16px; cursor:pointer;">&times;</button>
                 <strong>PIANO DEL: ${escapeHTML(p.data)}</strong><p style="margin:8px 0; white-space:pre-line;">${escapeHTML(p.testo)}</p>
-                <button id="tog-dia-${pIdx}" class="btn-view" style="background:${isDiarioOpen?'var(--zinc-800)':'var(--primary)'}">${isDiarioOpen ? 'CHIUDI' : '📋 DIARIO'}</button>
+                <button id="tog-dia-${pIdx}" class="btn-view" style="background:${isDiarioOpen?'var(--zinc-800)':'var(--primary)'}">${isDiarioOpen ? 'CHIUDI DIARIO' : '📋 DIARIO'}</button>
+                
                 <div class="banner-diario ${isDiarioOpen ? '' : 'hidden'}">
-                    <div style="display:flex; gap:8px; flex-direction:column;">
+                    <button id="btn-show-add-nota-${pIdx}" class="btn-view" style="background:var(--primary); margin-bottom:10px; width:100%;">+ AGGIUNGI NOTA DIARIO</button>
+                    
+                    <div id="form-nuova-nota-${pIdx}" class="hidden" style="background:white; padding:12px; border-radius:10px; border:1px solid var(--zinc-200); margin-bottom:15px;">
                         <input type="text" id="date-nota-${pIdx}" placeholder="Data (gg/mm/aaaa)">
-                        <textarea id="in-nota-${pIdx}" placeholder="Nota..."></textarea>
-                        <button id="add-nota-${pIdx}" class="btn-view" style="background:var(--success)">OK</button>
+                        <textarea id="in-nota-${pIdx}" placeholder="Trascrivi nota diario..."></textarea>
+                        <div style="display:flex; gap:8px;">
+                            <button id="add-nota-${pIdx}" class="btn-view" style="background:var(--success); flex:1;">CONFERMA</button>
+                            <button id="cancel-nota-${pIdx}" class="btn-del" style="background:var(--zinc-500); flex:1;">ANNULLA</button>
+                        </div>
                     </div>
+                    
                     <div id="diario-list-${pIdx}">`;
+            
             p.diario.forEach((n, nIdx) => {
-                html += `<div class="nota-item"><button id="del-nota-${pIdx}-${nIdx}" style="float:right; background:none; border:none; cursor:pointer;">&times;</button>
-                <small><strong>${escapeHTML(n.data)}</strong></small><br>${escapeHTML(n.testo)}</div>`;
+                // STRUTTURA AD ACCORDION (TENDINA CLICCABILE)
+                html += `
+                <div class="nota-item-container" id="container-nota-${pIdx}-${nIdx}">
+                    <div class="nota-header-click" id="trigger-expand-${pIdx}-${nIdx}">
+                        <div><small style="color:var(--primary); font-weight:700;">${escapeHTML(n.data)}</small> - <span style="color:var(--zinc-500); font-size:12px;">Leggi trascrizione...</span></div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="arrow-indicator">▼</span>
+                            <button id="del-nota-${pIdx}-${nIdx}" style="background:none; border:none; padding:4px; font-size:14px; color:var(--danger); cursor:pointer;">&times;</button>
+                        </div>
+                    </div>
+                    <div class="nota-body-expand">${escapeHTML(n.testo)}</div>
+                </div>`;
             });
             html += `</div></div></div>`;
             
-            const wrap = document.createElement('div');
-            wrap.innerHTML = html;
-            cont.appendChild(wrap);
+            const wrap = document.createElement('div'); wrap.innerHTML = html; cont.appendChild(wrap);
 
+            // EVENTI INTERFACCIA DIARIO
             document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
             document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
+            
             if(isDiarioOpen){
+                const formNota = document.getElementById(`form-nuova-nota-${pIdx}`);
+                const btnShow = document.getElementById(`btn-show-add-nota-${pIdx}`);
+                
+                btnShow.onclick = () => { formNota.classList.remove('hidden'); btnShow.classList.add('hidden'); };
+                document.getElementById(`cancel-nota-${pIdx}`).onclick = () => { formNota.classList.add('hidden'); btnShow.classList.remove('hidden'); };
                 document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
+                
                 p.diario.forEach((n, nIdx) => {
-                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = () => eliminaNota(pIdx, nIdx);
+                    // INTERCETTATORE APERTURA TENDINA NOTA
+                    document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = (e) => {
+                        document.getElementById(`container-nota-${pIdx}-${nIdx}`).classList.toggle('expanded');
+                    };
+                    // PULSANTE CANCELLAZIONE NOTA DIARIO FISSO
+                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = (e) => {
+                        e.stopPropagation(); // Evita di aprire la tendina mentre si cancella
+                        eliminaNota(pIdx, nIdx);
+                    };
                 });
             }
         });
     }
 
     const aggiungiNota = async (pIdx) => {
-        const t = document.getElementById('in-nota-' + pIdx).value;
-        const d = document.getElementById('date-nota-' + pIdx).value || '--';
-        if(!t) return; 
+        const t = document.getElementById('in-nota-' + pIdx).value.trim();
+        const d = document.getElementById('date-nota-' + pIdx).value.trim() || new Date().toLocaleDateString();
+        if(!t) return alert("La nota non può essere vuota."); 
         curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
-        await salvaPazienteSuCloud(curPz); 
-        renderImbuto();
+        try {
+            setSubmittingState(true); await salvaPazienteSuCloud(curPz); renderImbuto();
+        }catch(e){} finally { setSubmittingState(false); }
     }
 
-    const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); await salvaEChiudi(true); renderImbuto(); } }
-    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); await salvaEChiudi(true); } }
+    const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); setSubmittingState(true); salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false)); } }
+    const eliminaNota = async (pIdx, nIdx) => { if(confirm("Eliminare questa nota dal diario?")) { curPz.diagnosi[curDiagIdx].piani[pIdx].diario.splice(nIdx, 1); setSubmittingState(true); salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false)); } }
     
     const salvaEChiudi = async (keep=false) => { 
-        await salvaPazienteSuCloud(curPz); 
-        if(!keep) showSection('dashboard'); else renderDiagnosi(); 
+        setSubmittingState(true);
+        try {
+            await salvaPazienteSuCloud(curPz); if(!keep) showSection('dashboard'); else renderDiagnosi(); 
+        }catch(e){} finally { setSubmittingState(false); }
     }
     
     const apriModalPaziente = (edit) => {
@@ -684,7 +683,6 @@
 
     const generaStampa = () => {
         if(!curPz) return;
-        
         let htmlContent = `<html><head><title>Stampa Cartella Clinica</title>
         <style>
             body { font-family: sans-serif; padding: 40px; color: #000; line-height: 1.5; background: #fff; }
@@ -699,7 +697,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v17.9 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.0 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -724,30 +722,19 @@
                 htmlContent += `</div>`;
             });
         }
-        
         htmlContent += `</body></html>`;
-
-        const winStampa = window.open('', '_blank');
-        winStampa.document.write(htmlContent);
-        winStampa.document.close();
-        winStampa.focus();
-        
-        setTimeout(() => {
-            winStampa.print();
-            winStampa.close();
-        }, 500);
+        const winStampa = window.open('', '_blank'); winStampa.document.write(htmlContent); winStampa.document.close(); winStampa.focus();
+        setTimeout(() => { winStampa.print(); winStampa.close(); }, 500);
     }
 
-    // ---- ATTACCO DEGLI EVENT LISTENER ----
+    // ---- EVENT LISTENERS ----
     document.getElementById('btn-login-submit').onclick = handleLogin;
     document.getElementById('nav-dash').onclick = () => showSection('dashboard');
     document.getElementById('nav-arch').onclick = () => showSection('archivio');
     document.getElementById('user-display').onclick = handleLogout;
     document.getElementById('btn-nuovo-paziente').onclick = () => apriModalPaziente(false);
-    
     document.getElementById('cercaDashboard').onkeyup = renderDashboard;
     document.getElementById('cercaArchivio').onkeyup = renderArchivio;
-    
     document.getElementById('btn-esci-clinica').onclick = () => showSection('dashboard');
     document.getElementById('btn-ripristina-clinica').onclick = () => toggleStato(curPz.id, true);
     document.getElementById('btn-stampa-clinica').onclick = generaStampa;
@@ -755,15 +742,10 @@
     document.getElementById('btn-edit-anagrafica').onclick = () => apriModalPaziente(true);
     document.getElementById('btn-apri-modal-diagnosi').onclick = () => document.getElementById('modal-diagnosi').classList.remove('hidden');
     document.getElementById('btn-apri-modal-piano').onclick = () => document.getElementById('modal-piano').classList.remove('hidden');
-    
     document.getElementById('btn-salva-anagrafica').onclick = salvaAnagrafica;
     document.getElementById('btn-salva-diagnosi').onclick = salvaDiagnosi;
     document.getElementById('btn-crea-piano').onclick = salvaPiano;
-
-    document.querySelectorAll('.close-modal-btn').forEach(btn => {
-        btn.onclick = chiudiTutto;
-    });
-
+    document.querySelectorAll('.close-modal-btn').forEach(btn => { btn.onclick = chiudiTutto; });
 </script>
 </body>
 </html>
