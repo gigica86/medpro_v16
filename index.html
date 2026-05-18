@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v18.3 | Clinical Management (Advanced Editor)</title>
+    <title>MEDPRO v18.4 | Clinical Management (Stabile)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -302,7 +302,6 @@
     let editMode = false;
     let openDiarioIdx = null;
 
-    // Variabili d'appoggio per capire se stiamo modificando un record esistente dentro i popup
     let globalEditIdxDiag = null;
     let globalEditIdxPiano = null;
     let globalEditIdxNota = null;
@@ -442,7 +441,9 @@
             await salvaPazienteSuCloud(curPz);
             chiudiTutto(); 
             if(editMode) apriClinica(curPz.id); else showSection('dashboard');
-        } catch (e) {} finally { setSubmittingState(false); }
+        } catch (e) {
+            console.error(e);
+        } finally { setSubmittingState(false); }
     }
 
     const renderDashboard = () => {
@@ -493,7 +494,7 @@
         forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    constGridDefinitivo = async (id) => {
+    const eliminaDefinitivo = async (id) => {
         if(confirm("Eliminare definitivamente questo record dal cloud?")) { 
             try {
                 setSubmittingState(true);
@@ -516,7 +517,6 @@
         renderDiagnosi();
     }
 
-    // ---- LOGICA DIAGNOSI CON SUPPORTO MODIFICA FINESTRA MODALE ----
     const salvaDiagnosi = async () => {
         const nomeVal = document.getElementById('m-diag-nome').value.trim();
         if(!nomeVal) return alert("Il nome della patologia è obbligatorio.");
@@ -524,7 +524,6 @@
         let fileUrl = null;
         let fileName = null;
 
-        // Se siamo in modalità INSERIMENTO (Nuova Diagnosi) carichiamo l'eventuale allegato
         if (globalEditIdxDiag === null) {
             const fileInput = document.getElementById('m-diag-file');
             if (fileInput && fileInput.files.length > 0) {
@@ -544,12 +543,10 @@
         }
 
         if (globalEditIdxDiag !== null) {
-            // SINTASSI DI MODIFICA RECORD ESISTENTE DA RIQUADRO MODALE
             curPz.diagnosi[globalEditIdxDiag].nome = nomeVal;
             curPz.diagnosi[globalEditIdxDiag].data = document.getElementById('m-diag-data').value || '--';
             curPz.diagnosi[globalEditIdxDiag].sintesi = document.getElementById('m-diag-sintesi').value;
         } else {
-            // SINTASSI INSERIMENTO STANDARD
             curPz.diagnosi.push({ 
                 nome: nomeVal, 
                 data: document.getElementById('m-diag-data').value || '--', 
@@ -583,7 +580,6 @@
                 clip.onclick = (e) => e.stopPropagation(); divClick.appendChild(clip);
             }
 
-            // APERTURA RIQUADRO ORIGINALE COMPILATO PER LA MODIFICA DELLA DIAGNOSI
             const btnEdit = document.createElement('button'); btnEdit.className = "inline-edit-btn"; btnEdit.innerHTML = "✏️";
             btnEdit.onclick = (e) => { e.stopPropagation(); openModalDiagnosiForEdit(i); };
 
@@ -600,7 +596,7 @@
         document.getElementById('m-diag-nome').value = curPz.diagnosi[idx].nome;
         document.getElementById('m-diag-data').value = curPz.diagnosi[idx].data;
         document.getElementById('m-diag-sintesi').value = curPz.diagnosi[idx].sintesi;
-        document.getElementById('carica-file-block').classList.add('hidden'); // Nasconde l'upload allegati in modifica
+        document.getElementById('carica-file-block').classList.add('hidden'); 
         document.getElementById('modal-diagnosi').classList.remove('hidden');
     }
 
@@ -618,17 +614,14 @@
         renderImbuto();
     }
 
-    // ---- LOGICA PIANO TERAPEUTICO CON SUPPORTO MODIFICA FINESTRA MODALE ----
     const salvaPiano = async () => {
         const dataVal = document.getElementById('m-piano-data').value || '--';
         const testoVal = document.getElementById('m-piano-testo').value;
 
         if (globalEditIdxPiano !== null) {
-            // MODIFICA FINESTRA MODALE ESISTENTE
             curPz.diagnosi[curDiagIdx].piani[globalEditIdxPiano].data = dataVal;
             curPz.diagnosi[curDiagIdx].piani[globalEditIdxPiano].testo = testoVal;
         } else {
-            // NUOVO INSERIMENTO
             curPz.diagnosi[curDiagIdx].piani.unshift({ testo: testoVal, data: dataVal, diario: [] });
         }
 
@@ -722,7 +715,6 @@
                     document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = () => notaContainer.classList.toggle('expanded');
                     document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = (e) => { e.stopPropagation(); eliminaNota(pIdx, nIdx); };
 
-                    // RIAPRE IL RIQUADRO DI COMPILAZIONE NATIVO DEL DIARIO PER LA MODIFICA
                     document.getElementById(`edit-nota-${pIdx}-${nIdx}`).onclick = (e) => {
                         e.stopPropagation();
                         globalEditIdxNota = nIdx;
@@ -737,18 +729,15 @@
         });
     }
 
-    // ---- LOGICA DIARIO COMPATIBILE CON MODIFICA ----
     const aggiungiNota = async (pIdx) => {
         const t = document.getElementById('in-nota-' + pIdx).value.trim();
         const d = document.getElementById('date-nota-' + pIdx).value.trim() || new Date().toLocaleDateString();
         if(!t) return alert("La nota non può essere vuota."); 
 
         if (globalEditIdxNota !== null) {
-            // MODIFICA NOTA DIARIO IN CORSO
             curPz.diagnosi[curDiagIdx].piani[pIdx].diario[globalEditIdxNota].data = d;
             curPz.diagnosi[curDiagIdx].piani[pIdx].diario[globalEditIdxNota].testo = t;
         } else {
-            // NUOVO INSERIMENTO NOTA DIARIO
             curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
         }
 
@@ -800,7 +789,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.3 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.4 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
