@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v18.1 | Clinical Management (Diagnosis Navigation)</title>
+    <title>MEDPRO v18.2 | Clinical Management (Live Editor)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,6 +95,10 @@
         .nota-item-container.expanded .nota-body-expand { display: block; }
         .arrow-indicator { transition: transform 0.2s; font-size: 12px; color: var(--zinc-500); }
         .nota-item-container.expanded .arrow-indicator { transform: rotate(180deg); }
+
+        /* BOTTONI EDIT IN LINEA */
+        .inline-edit-btn { background: none; border: none; padding: 4px 6px; cursor: pointer; font-size: 14px; color: var(--zinc-500); border-radius: 4px; }
+        .inline-edit-btn:hover { background: var(--zinc-100); color: var(--primary); }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -220,7 +224,9 @@
                     <button id="btn-chiudi-focus" class="btn-del" style="background: var(--zinc-100); color: var(--zinc-800); margin-bottom: 15px; width: 100%; justify-content: flex-start;">← CHIUDI DETTAGLI</button>
                     
                     <h2 id="focus-titolo" style="margin-bottom:5px;">--</h2>
-                    <div id="focus-sintesi" style="background:var(--zinc-100); padding:10px; border-radius:8px; margin-bottom:20px; font-style:italic; color:var(--zinc-800); border-left: 3px solid var(--zinc-500);"></div>
+                    <div id="focus-sintesi-container" style="position:relative; margin-bottom:20px;">
+                        <div id="focus-sintesi" style="background:var(--zinc-100); padding:10px; border-radius:8px; font-style:italic; color:var(--zinc-800); border-left: 3px solid var(--zinc-500); white-space:pre-line;"></div>
+                    </div>
                     
                     <button class="btn-view" style="margin-bottom:15px;" id="btn-apri-modal-piano">+ NUOVO PIANO</button>
                     <div id="focus-imbuto"></div>
@@ -430,7 +436,9 @@
             await salvaPazienteSuCloud(curPz);
             chiudiTutto(); 
             if(editMode) apriClinica(curPz.id); else showSection('dashboard');
-        } catch (e) {} finally { setSubmittingState(false); }
+        } catch (e) {
+            console.error(e);
+        } finally { setSubmittingState(false); }
     }
 
     const renderDashboard = () => {
@@ -467,7 +475,7 @@
             btnTog.onclick = () => { setSubmittingState(true); toggleStato(p.id).finally(() => setSubmittingState(false)); };
 
             const btnDel = document.createElement('button'); btnDel.className = "btn-del"; btnDel.textContent = "🗑️ Elimina";
-            btnDel.onclick = () => eliminaDefinitivo(p.id); // Bugfix ripristinato nome corretto
+            btnDel.onclick = () => eliminaDefinitivo(p.id);
 
             tr.cells[2].appendChild(btnView); tr.cells[2].appendChild(btnTog); tr.cells[2].appendChild(btnDel);
             tbody.appendChild(tr);
@@ -556,21 +564,47 @@
                 clip.style.textDecoration = "none"; clip.style.marginLeft = "5px";
                 clip.onclick = (e) => e.stopPropagation(); divClick.appendChild(clip);
             }
+
+            // TASTO MODIFICA IN LINEA DIAGNOSI (MATITINA)
+            const btnEdit = document.createElement('button'); btnEdit.className = "inline-edit-btn"; btnEdit.innerHTML = "✏️";
+            btnEdit.onclick = (e) => { e.stopPropagation(); editDiagnosiInLinea(i); };
+
             const btnDel = document.createElement('button'); btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
             btnDel.onclick = (e) => { e.stopPropagation(); eliminaDiagnosi(i); };
-            row.appendChild(divClick); row.appendChild(btnDel); cont.appendChild(row);
+            
+            row.appendChild(divClick); row.appendChild(btnEdit); row.appendChild(btnDel); cont.appendChild(row);
         });
     }
 
-    const eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { curPz.diagnosi.splice(idx, 1); await salvaEChiudi(true); } }
+    const editDiagnosiInLinea = (idx) => {
+        const nuovoNome = prompt("Modifica Patologia / Diagnosi:", curPz.diagnosi[idx].nome);
+        if (nuovoNome === null) return; 
+        if (nuovoNome.trim() === "") return alert("Il nome non può essere vuoto.");
+        curPz.diagnosi[idx].nome = nuovoNome.trim();
+        setSubmittingState(true);
+        salvaPazienteSuCloud(curPz).then(() => { renderDiagnosi(); if(curDiagIdx === idx) apriFocus(idx); }).finally(() => setSubmittingState(false));
+    }
+
+    const eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { curPz.diagnosi.splice(idx, 1); curDiagIdx = null; await salvaEChiudi(true); } }
 
     const apriFocus = (idx) => {
         curDiagIdx = idx; document.getElementById('area-focus').classList.remove('hidden');
         const diag = curPz.diagnosi[idx]; document.getElementById('focus-titolo').textContent = diag.nome;
         const sBox = document.getElementById('focus-sintesi');
-        let notaTesto = diag.sintesi ? "Note Diagnosi: " + diag.sintesi : "Nessuna nota inserita.";
-        if(diag.fileUrl) notaTesto += `\n[Allegato: ${diag.fileName}]`;
-        sBox.textContent = notaTesto;
+        
+        // Costruiamo testo e tastino di editing per le note di sintesi della diagnosi
+        sBox.innerHTML = `<div>${escapeHTML(diag.sintesi || 'Nessuna nota inserita.')}</div>
+                          <button class="inline-edit-btn" id="btn-edit-sintesi" style="margin-top:8px; font-size:12px;">✏️ Modifica Note Diagnosi</button>`;
+        
+        document.getElementById('btn-edit-sintesi').onclick = () => {
+            const nuovaSintesi = prompt("Modifica Note Diagnosi:", curPz.diagnosi[idx].sintesi);
+            if(nuovaSintesi !== null) {
+                curPz.diagnosi[idx].sintesi = nuovaSintesi;
+                setSubmittingState(true);
+                salvaPazienteSuCloud(curPz).then(() => apriFocus(idx)).finally(() => setSubmittingState(false));
+            }
+        };
+        
         renderImbuto();
     }
 
@@ -587,9 +621,15 @@
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
         curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
             const isDiarioOpen = openDiarioIdx === pIdx;
-            let html = `<div class="piano-box">
-                <button id="del-piano-${pIdx}" style="float:right; background:none; border:none; font-size:16px; cursor:pointer;">&times;</button>
-                <strong>PIANO DEL: ${escapeHTML(p.data)}</strong><p style="margin:8px 0; white-space:pre-line;">${escapeHTML(p.testo)}</p>
+            
+            const wrapBox = document.createElement('div');
+            wrapBox.className = "piano-box";
+            
+            let innerHTML = `
+                <button id="del-piano-${pIdx}" style="float:right; background:none; border:none; font-size:16px; cursor:pointer; color:var(--danger);">&times;</button>
+                <button id="edit-piano-${pIdx}" class="inline-edit-btn" style="float:right; margin-right:10px;">✏️</button>
+                <strong>PIANO DEL: ${escapeHTML(p.data)}</strong>
+                <p style="margin:8px 0; white-space:pre-line;" id="text-piano-${pIdx}">${escapeHTML(p.testo)}</p>
                 <button id="tog-dia-${pIdx}" class="btn-view" style="background:${isDiarioOpen?'var(--zinc-800)':'var(--primary)'}">${isDiarioOpen ? 'CHIUDI DIARIO' : '📋 DIARIO'}</button>
                 
                 <div class="banner-diario ${isDiarioOpen ? '' : 'hidden'}">
@@ -604,43 +644,73 @@
                         </div>
                     </div>
                     
-                    <div id="diario-list-${pIdx}">`;
-            
-            p.diario.forEach((n, nIdx) => {
-                html += `
-                <div class="nota-item-container" id="container-nota-${pIdx}-${nIdx}">
-                    <div class="nota-header-click" id="trigger-expand-${pIdx}-${nIdx}">
-                        <div><small style="color:var(--primary); font-weight:700;">${escapeHTML(n.data)}</small> - <span style="color:var(--zinc-500); font-size:12px;">Leggi trascrizione...</span></div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span class="arrow-indicator">▼</span>
-                            <button id="del-nota-${pIdx}-${nIdx}" style="background:none; border:none; padding:4px; font-size:14px; color:var(--danger); cursor:pointer;">&times;</button>
-                        </div>
-                    </div>
-                    <div class="nota-body-expand">${escapeHTML(n.testo)}</div>
+                    <div id="diario-list-${pIdx}"></div>
                 </div>`;
-            });
-            html += `</div></div></div>`;
-            
-            const wrap = document.createElement('div'); wrap.innerHTML = html; cont.appendChild(wrap);
+                
+            wrapBox.innerHTML = innerHTML;
+            cont.appendChild(wrapBox);
 
+            // EVENTI DEL PIANO TERAPEUTICO
             document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
             document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
+            
+            // MODIFICA IN LINEA DEL TESTO DELLA TERAPIA (PIANO)
+            document.getElementById(`edit-piano-${pIdx}`).onclick = () => {
+                const nuovoTestoPiano = prompt("Modifica la prescrizione / terapia del piano:", p.testo);
+                if(nuovoTestoPiano !== null) {
+                    curPz.diagnosi[curDiagIdx].piani[pIdx].testo = nuovoTestoPiano;
+                    setSubmittingState(true);
+                    salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false));
+                }
+            };
             
             if(isDiarioOpen){
                 const formNota = document.getElementById(`form-nuova-nota-${pIdx}`);
                 const btnShow = document.getElementById(`btn-show-add-nota-${pIdx}`);
+                const dList = document.getElementById(`diario-list-${pIdx}`);
                 
                 btnShow.onclick = () => { formNota.classList.remove('hidden'); btnShow.classList.add('hidden'); };
                 document.getElementById(`cancel-nota-${pIdx}`).onclick = () => { formNota.classList.add('hidden'); btnShow.classList.remove('hidden'); };
                 document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
                 
+                // RENDERING DELLE NOTE DIARIO CON STRUTTURA ACCORDION + EDITING MATITINA
                 p.diario.forEach((n, nIdx) => {
+                    const notaContainer = document.createElement('div');
+                    notaContainer.className = "nota-item-container";
+                    notaContainer.id = `container-nota-${pIdx}-${nIdx}`;
+                    
+                    notaContainer.innerHTML = `
+                    <div class="nota-header-click" id="trigger-expand-${pIdx}-${nIdx}">
+                        <div><small style="color:var(--primary); font-weight:700;">${escapeHTML(n.data)}</small> - <span style="color:var(--zinc-500); font-size:12px;">Leggi trascrizione...</span></div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button id="edit-nota-${pIdx}-${nIdx}" class="inline-edit-btn" style="padding:2px 4px;">✏️</button>
+                            <button id="del-nota-${pIdx}-${nIdx}" style="background:none; border:none; padding:2px 4px; font-size:14px; color:var(--danger); cursor:pointer;">&times;</button>
+                            <span class="arrow-indicator" style="margin-left:4px;">▼</span>
+                        </div>
+                    </div>
+                    <div class="nota-body-expand">${escapeHTML(n.testo)}</div>`;
+                    
+                    dList.appendChild(notaContainer);
+
+                    // EVENTI DELLA SINGOLA NOTA DIARIO
                     document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = () => {
-                        document.getElementById(`container-nota-${pIdx}-${nIdx}`).classList.toggle('expanded');
+                        notaContainer.classList.toggle('expanded');
                     };
+                    
                     document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = (e) => {
                         e.stopPropagation();
                         eliminaNota(pIdx, nIdx);
+                    };
+
+                    // MODIFICA IN LINEA DELLA NOTA DEL DIARIO
+                    document.getElementById(`edit-nota-${pIdx}-${nIdx}`).onclick = (e) => {
+                        e.stopPropagation();
+                        const nuovoTestoNota = prompt("Modifica nota diario:", n.testo);
+                        if(nuovoTestoNota !== null) {
+                            curPz.diagnosi[curDiagIdx].piani[pIdx].diario[nIdx].testo = nuovoTestoNota;
+                            setSubmittingState(true);
+                            salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false));
+                        }
                     };
                 });
             }
@@ -688,12 +758,14 @@
             .diag-title { background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px; }
             .piano-block { margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px; }
             .piano-title { font-weight: bold; text-decoration: underline; }
-            .nota-item { font-size: 12px; margin-top: 5px; border-top: 1px solid #f1f1f1; padding-top: 3px; }
+            
+            /* MIGLIORAMENTO: DIARIO STAMPATO CON CARATTERE CORRETTO ED EQUILIBRATO */
+            .nota-item-print { font-size: 14px; margin-top: 8px; background: #fdfdfd; border-top: 1px dashed #ddd; padding-top: 6px; color:#222; }
         </style>
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.1 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.2 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -711,7 +783,7 @@
                         <div class="piano-title">Piano Terapeutico del ${escapeHTML(p.data)}</div>
                         <p style="margin: 5px 0; white-space:pre-line;">${escapeHTML(p.testo)}</p>`;
                     if (p.diario) p.diario.forEach(n => {
-                        htmlContent += `<div class="nota-item"><strong>${escapeHTML(n.data)}:</strong> ${escapeHTML(n.testo)}</div>`;
+                        htmlContent += `<div class="nota-item-print"><strong>Nota Diario del ${escapeHTML(n.data)}:</strong><br>${escapeHTML(n.testo)}</div>`;
                     });
                     htmlContent += `</div>`;
                 });
@@ -741,11 +813,10 @@
     document.getElementById('btn-apri-modal-diagnosi').onclick = () => document.getElementById('modal-diagnosi').classList.remove('hidden');
     document.getElementById('btn-apri-modal-piano').onclick = () => document.getElementById('modal-piano').classList.remove('hidden');
     
-    // AZIONE DI CHIUSURA FOCUS DIAGNOSI IN CLOUD
     document.getElementById('btn-chiudi-focus').onclick = () => {
         document.getElementById('area-focus').classList.add('hidden');
         curDiagIdx = null;
-        renderDiagnosi(); // Aggiorna graficamente lo stato attivo deselezionandolo
+        renderDiagnosi();
     };
     
     document.getElementById('btn-salva-anagrafica').onclick = salvaAnagrafica;
