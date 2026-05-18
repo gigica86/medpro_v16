@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v18.2 | Clinical Management (Live Editor)</title>
+    <title>MEDPRO v18.3 | Clinical Management (Advanced Editor)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -96,7 +96,6 @@
         .arrow-indicator { transition: transform 0.2s; font-size: 12px; color: var(--zinc-500); }
         .nota-item-container.expanded .arrow-indicator { transform: rotate(180deg); }
 
-        /* BOTTONI EDIT IN LINEA */
         .inline-edit-btn { background: none; border: none; padding: 4px 6px; cursor: pointer; font-size: 14px; color: var(--zinc-500); border-radius: 4px; }
         .inline-edit-btn:hover { background: var(--zinc-100); color: var(--primary); }
 
@@ -238,7 +237,7 @@
 
 <div id="modal-pz" class="modal hidden">
     <div class="card" style="width:100%; max-width:400px;">
-        <h2>Anagrafica Paziente</h2>
+        <h2 id="title-modal-pz">Anagrafica Paziente</h2>
         <input type="text" id="m-nome" placeholder="Nome e Cognome">
         <input type="text" id="m-nascita" placeholder="Data Nascita (gg/mm/aaaa)">
         <input type="text" id="m-via" placeholder="Indirizzo">
@@ -252,12 +251,14 @@
 
 <div id="modal-diagnosi" class="modal hidden">
     <div class="card" style="width:100%; max-width:400px;">
-        <h3>Nuova Diagnosi</h3>
+        <h3 id="title-modal-diag">Nuova Diagnosi</h3>
         <input type="text" id="m-diag-nome" placeholder="Patologia">
         <input type="text" id="m-diag-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-diag-sintesi" placeholder="Note..."></textarea>
-        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:12px;">Carica Referto/Allegato (Opzionale):</label>
-        <input type="file" id="m-diag-file" style="font-size:13px!important;">
+        <div id="carica-file-block">
+            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:12px;">Carica Referto/Allegato (Opzionale):</label>
+            <input type="file" id="m-diag-file" style="font-size:13px!important;">
+        </div>
         <button class="btn-view" style="width:100%" id="btn-salva-diagnosi">SALVA</button>
         <button class="btn-del close-modal-btn" style="width:100%; margin-top:8px;">CHIUDI</button>
     </div>
@@ -265,7 +266,7 @@
 
 <div id="modal-piano" class="modal hidden">
     <div class="card" style="width:100%; max-width:400px;">
-        <h3>Nuovo Piano</h3>
+        <h3 id="title-modal-piano">Nuovo Piano</h3>
         <input type="text" id="m-piano-data" placeholder="Data (gg/mm/aaaa)">
         <textarea id="m-piano-testo" placeholder="Dettagli..."></textarea>
         <button class="btn-view" style="width:100%" id="btn-crea-piano">CREA</button>
@@ -300,6 +301,11 @@
     let curDiagIdx = null;
     let editMode = false;
     let openDiarioIdx = null;
+
+    // Variabili d'appoggio per capire se stiamo modificando un record esistente dentro i popup
+    let globalEditIdxDiag = null;
+    let globalEditIdxPiano = null;
+    let globalEditIdxNota = null;
 
     function escapeHTML(str) {
         if (!str) return '';
@@ -436,9 +442,7 @@
             await salvaPazienteSuCloud(curPz);
             chiudiTutto(); 
             if(editMode) apriClinica(curPz.id); else showSection('dashboard');
-        } catch (e) {
-            console.error(e);
-        } finally { setSubmittingState(false); }
+        } catch (e) {} finally { setSubmittingState(false); }
     }
 
     const renderDashboard = () => {
@@ -489,7 +493,7 @@
         forceOpen ? apriClinica(id) : showSection('dashboard');
     }
 
-    const eliminaDefinitivo = async (id) => {
+    constGridDefinitivo = async (id) => {
         if(confirm("Eliminare definitivamente questo record dal cloud?")) { 
             try {
                 setSubmittingState(true);
@@ -512,41 +516,55 @@
         renderDiagnosi();
     }
 
+    // ---- LOGICA DIAGNOSI CON SUPPORTO MODIFICA FINESTRA MODALE ----
     const salvaDiagnosi = async () => {
-        const fileInput = document.getElementById('m-diag-file');
-        let fileUrl = null; let fileName = null;
+        const nomeVal = document.getElementById('m-diag-nome').value.trim();
+        if(!nomeVal) return alert("Il nome della patologia è obbligatorio.");
 
-        if (fileInput && fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            const storageRef = ref(storage, `allegati_globali/${curPz.id}/${Date.now()}_${file.name}`);
-            try {
-                setSubmittingState(true, "Caricamento allegato...");
-                const snapshot = await uploadBytes(storageRef, file);
-                fileUrl = await getDownloadURL(snapshot.ref);
-                fileName = file.name;
-            } catch (err) {
-                alert("Errore upload file: " + err.message);
-                setSubmittingState(false);
-                return;
+        let fileUrl = null;
+        let fileName = null;
+
+        // Se siamo in modalità INSERIMENTO (Nuova Diagnosi) carichiamo l'eventuale allegato
+        if (globalEditIdxDiag === null) {
+            const fileInput = document.getElementById('m-diag-file');
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const storageRef = ref(storage, `allegati_globali/${curPz.id}/${Date.now()}_${file.name}`);
+                try {
+                    setSubmittingState(true, "Caricamento allegato...");
+                    const snapshot = await uploadBytes(storageRef, file);
+                    fileUrl = await getDownloadURL(snapshot.ref);
+                    fileName = file.name;
+                } catch (err) {
+                    alert("Errore upload file: " + err.message);
+                    setSubmittingState(false);
+                    return;
+                }
             }
         }
 
-        curPz.diagnosi.push({ 
-            nome: document.getElementById('m-diag-nome').value, 
-            data: document.getElementById('m-diag-data').value || '--', 
-            sintesi: document.getElementById('m-diag-sintesi').value, 
-            fileUrl: fileUrl, fileName: fileName, piani: [] 
-        });
+        if (globalEditIdxDiag !== null) {
+            // SINTASSI DI MODIFICA RECORD ESISTENTE DA RIQUADRO MODALE
+            curPz.diagnosi[globalEditIdxDiag].nome = nomeVal;
+            curPz.diagnosi[globalEditIdxDiag].data = document.getElementById('m-diag-data').value || '--';
+            curPz.diagnosi[globalEditIdxDiag].sintesi = document.getElementById('m-diag-sintesi').value;
+        } else {
+            // SINTASSI INSERIMENTO STANDARD
+            curPz.diagnosi.push({ 
+                nome: nomeVal, 
+                data: document.getElementById('m-diag-data').value || '--', 
+                sintesi: document.getElementById('m-diag-sintesi').value, 
+                fileUrl: fileUrl, fileName: fileName, piani: [] 
+            });
+        }
 
         try {
             setSubmittingState(true);
             await salvaPazienteSuCloud(curPz);
-            document.getElementById('m-diag-nome').value = "";
-            document.getElementById('m-diag-data').value = "";
-            document.getElementById('m-diag-sintesi').value = "";
-            if(fileInput) fileInput.value = "";
-            chiudiTutto(); renderDiagnosi();
-        } catch(e){} finally { setSubmittingState(false); }
+            chiudiTutto(); 
+            renderDiagnosi();
+            if(globalEditIdxDiag !== null && curDiagIdx === globalEditIdxDiag) apriFocus(globalEditIdxDiag);
+        } catch(e){} finally { setSubmittingState(false); globalEditIdxDiag = null; }
     }
 
     const renderDiagnosi = () => {
@@ -565,9 +583,9 @@
                 clip.onclick = (e) => e.stopPropagation(); divClick.appendChild(clip);
             }
 
-            // TASTO MODIFICA IN LINEA DIAGNOSI (MATITINA)
+            // APERTURA RIQUADRO ORIGINALE COMPILATO PER LA MODIFICA DELLA DIAGNOSI
             const btnEdit = document.createElement('button'); btnEdit.className = "inline-edit-btn"; btnEdit.innerHTML = "✏️";
-            btnEdit.onclick = (e) => { e.stopPropagation(); editDiagnosiInLinea(i); };
+            btnEdit.onclick = (e) => { e.stopPropagation(); openModalDiagnosiForEdit(i); };
 
             const btnDel = document.createElement('button'); btnDel.style.background = "none"; btnDel.style.border = "none"; btnDel.style.fontSize = "20px"; btnDel.innerHTML = "&times;";
             btnDel.onclick = (e) => { e.stopPropagation(); eliminaDiagnosi(i); };
@@ -576,13 +594,14 @@
         });
     }
 
-    const editDiagnosiInLinea = (idx) => {
-        const nuovoNome = prompt("Modifica Patologia / Diagnosi:", curPz.diagnosi[idx].nome);
-        if (nuovoNome === null) return; 
-        if (nuovoNome.trim() === "") return alert("Il nome non può essere vuoto.");
-        curPz.diagnosi[idx].nome = nuovoNome.trim();
-        setSubmittingState(true);
-        salvaPazienteSuCloud(curPz).then(() => { renderDiagnosi(); if(curDiagIdx === idx) apriFocus(idx); }).finally(() => setSubmittingState(false));
+    const openModalDiagnosiForEdit = (idx) => {
+        globalEditIdxDiag = idx;
+        document.getElementById('title-modal-diag').textContent = "Modifica Diagnosi";
+        document.getElementById('m-diag-nome').value = curPz.diagnosi[idx].nome;
+        document.getElementById('m-diag-data').value = curPz.diagnosi[idx].data;
+        document.getElementById('m-diag-sintesi').value = curPz.diagnosi[idx].sintesi;
+        document.getElementById('carica-file-block').classList.add('hidden'); // Nasconde l'upload allegati in modifica
+        document.getElementById('modal-diagnosi').classList.remove('hidden');
     }
 
     const eliminaDiagnosi = async (idx) => { if(confirm("Eliminare la diagnosi?")) { curPz.diagnosi.splice(idx, 1); curDiagIdx = null; await salvaEChiudi(true); } }
@@ -592,27 +611,42 @@
         const diag = curPz.diagnosi[idx]; document.getElementById('focus-titolo').textContent = diag.nome;
         const sBox = document.getElementById('focus-sintesi');
         
-        // Costruiamo testo e tastino di editing per le note di sintesi della diagnosi
         sBox.innerHTML = `<div>${escapeHTML(diag.sintesi || 'Nessuna nota inserita.')}</div>
                           <button class="inline-edit-btn" id="btn-edit-sintesi" style="margin-top:8px; font-size:12px;">✏️ Modifica Note Diagnosi</button>`;
         
-        document.getElementById('btn-edit-sintesi').onclick = () => {
-            const nuovaSintesi = prompt("Modifica Note Diagnosi:", curPz.diagnosi[idx].sintesi);
-            if(nuovaSintesi !== null) {
-                curPz.diagnosi[idx].sintesi = nuovaSintesi;
-                setSubmittingState(true);
-                salvaPazienteSuCloud(curPz).then(() => apriFocus(idx)).finally(() => setSubmittingState(false));
-            }
-        };
-        
+        document.getElementById('btn-edit-sintesi').onclick = () => openModalDiagnosiForEdit(idx);
         renderImbuto();
     }
 
+    // ---- LOGICA PIANO TERAPEUTICO CON SUPPORTO MODIFICA FINESTRA MODALE ----
     const salvaPiano = async () => {
-        curPz.diagnosi[curDiagIdx].piani.unshift({ testo: document.getElementById('m-piano-testo').value, data: document.getElementById('m-piano-data').value || '--', diario: [] });
+        const dataVal = document.getElementById('m-piano-data').value || '--';
+        const testoVal = document.getElementById('m-piano-testo').value;
+
+        if (globalEditIdxPiano !== null) {
+            // MODIFICA FINESTRA MODALE ESISTENTE
+            curPz.diagnosi[curDiagIdx].piani[globalEditIdxPiano].data = dataVal;
+            curPz.diagnosi[curDiagIdx].piani[globalEditIdxPiano].testo = testoVal;
+        } else {
+            // NUOVO INSERIMENTO
+            curPz.diagnosi[curDiagIdx].piani.unshift({ testo: testoVal, data: dataVal, diario: [] });
+        }
+
         try {
-            setSubmittingState(true); await salvaPazienteSuCloud(curPz); chiudiTutto(); renderImbuto();
-        }catch(e){} finally { setSubmittingState(false); }
+            setSubmittingState(true); 
+            await salvaPazienteSuCloud(curPz); 
+            chiudiTutto(); 
+            renderImbuto();
+        } catch(e){} finally { setSubmittingState(false); globalEditIdxPiano = null; }
+    }
+
+    const openModalPianoForEdit = (idx) => {
+        globalEditIdxPiano = idx;
+        document.getElementById('title-modal-piano').textContent = "Modifica Piano Terapeutico";
+        document.getElementById('m-piano-data').value = curPz.diagnosi[curDiagIdx].piani[idx].data;
+        document.getElementById('m-piano-testo').value = curPz.diagnosi[curDiagIdx].piani[idx].testo;
+        document.getElementById('btn-crea-piano').textContent = "SALVA MODIFICHE";
+        document.getElementById('modal-piano').classList.remove('hidden');
     }
 
     const toggleDiarioBanner = (pIdx) => { openDiarioIdx = (openDiarioIdx === pIdx) ? null : pIdx; renderImbuto(); }
@@ -621,9 +655,7 @@
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
         curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
             const isDiarioOpen = openDiarioIdx === pIdx;
-            
-            const wrapBox = document.createElement('div');
-            wrapBox.className = "piano-box";
+            const wrapBox = document.createElement('div'); wrapBox.className = "piano-box";
             
             let innerHTML = `
                 <button id="del-piano-${pIdx}" style="float:right; background:none; border:none; font-size:16px; cursor:pointer; color:var(--danger);">&times;</button>
@@ -643,37 +675,32 @@
                             <button id="cancel-nota-${pIdx}" class="btn-del" style="background:var(--zinc-500); flex:1;">ANNULLA</button>
                         </div>
                     </div>
-                    
                     <div id="diario-list-${pIdx}"></div>
                 </div>`;
                 
-            wrapBox.innerHTML = innerHTML;
-            cont.appendChild(wrapBox);
+            wrapBox.innerHTML = innerHTML; cont.appendChild(wrapBox);
 
-            // EVENTI DEL PIANO TERAPEUTICO
             document.getElementById(`del-piano-${pIdx}`).onclick = () => eliminaPiano(pIdx);
             document.getElementById(`tog-dia-${pIdx}`).onclick = () => toggleDiarioBanner(pIdx);
-            
-            // MODIFICA IN LINEA DEL TESTO DELLA TERAPIA (PIANO)
-            document.getElementById(`edit-piano-${pIdx}`).onclick = () => {
-                const nuovoTestoPiano = prompt("Modifica la prescrizione / terapia del piano:", p.testo);
-                if(nuovoTestoPiano !== null) {
-                    curPz.diagnosi[curDiagIdx].piani[pIdx].testo = nuovoTestoPiano;
-                    setSubmittingState(true);
-                    salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false));
-                }
-            };
+            document.getElementById(`edit-piano-${pIdx}`).onclick = () => openModalPianoForEdit(pIdx);
             
             if(isDiarioOpen){
                 const formNota = document.getElementById(`form-nuova-nota-${pIdx}`);
                 const btnShow = document.getElementById(`btn-show-add-nota-${pIdx}`);
                 const dList = document.getElementById(`diario-list-${pIdx}`);
                 
-                btnShow.onclick = () => { formNota.classList.remove('hidden'); btnShow.classList.add('hidden'); };
-                document.getElementById(`cancel-nota-${pIdx}`).onclick = () => { formNota.classList.add('hidden'); btnShow.classList.remove('hidden'); };
+                btnShow.onclick = () => { 
+                    globalEditIdxNota = null;
+                    document.getElementById(`date-nota-${pIdx}`).value = new Date().toLocaleDateString();
+                    document.getElementById(`in-nota-${pIdx}`).value = "";
+                    document.getElementById(`add-nota-${pIdx}`).textContent = "CONFERMA";
+                    formNota.classList.remove('hidden'); 
+                    btnShow.classList.add('hidden'); 
+                };
+                
+                document.getElementById(`cancel-nota-${pIdx}`).onclick = () => { formNota.classList.add('hidden'); btnShow.classList.remove('hidden'); globalEditIdxNota = null; };
                 document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
                 
-                // RENDERING DELLE NOTE DIARIO CON STRUTTURA ACCORDION + EDITING MATITINA
                 p.diario.forEach((n, nIdx) => {
                     const notaContainer = document.createElement('div');
                     notaContainer.className = "nota-item-container";
@@ -681,7 +708,7 @@
                     
                     notaContainer.innerHTML = `
                     <div class="nota-header-click" id="trigger-expand-${pIdx}-${nIdx}">
-                        <div><small style="color:var(--primary); font-weight:700;">${escapeHTML(n.data)}</small> - <span style="color:var(--zinc-500); font-size:12px;">Leggi trascrizione...</span></div>
+                        <div><small style="color:var(--primary); font-weight:700;">${escapeHTML(n.data)}</small> - <span style="color:var(--zinc-500); font-size:12px;">Leggi descrizione...</span></div>
                         <div style="display:flex; align-items:center; gap:6px;">
                             <button id="edit-nota-${pIdx}-${nIdx}" class="inline-edit-btn" style="padding:2px 4px;">✏️</button>
                             <button id="del-nota-${pIdx}-${nIdx}" style="background:none; border:none; padding:2px 4px; font-size:14px; color:var(--danger); cursor:pointer;">&times;</button>
@@ -692,39 +719,45 @@
                     
                     dList.appendChild(notaContainer);
 
-                    // EVENTI DELLA SINGOLA NOTA DIARIO
-                    document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = () => {
-                        notaContainer.classList.toggle('expanded');
-                    };
-                    
-                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = (e) => {
-                        e.stopPropagation();
-                        eliminaNota(pIdx, nIdx);
-                    };
+                    document.getElementById(`trigger-expand-${pIdx}-${nIdx}`).onclick = () => notaContainer.classList.toggle('expanded');
+                    document.getElementById(`del-nota-${pIdx}-${nIdx}`).onclick = (e) => { e.stopPropagation(); eliminaNota(pIdx, nIdx); };
 
-                    // MODIFICA IN LINEA DELLA NOTA DEL DIARIO
+                    // RIAPRE IL RIQUADRO DI COMPILAZIONE NATIVO DEL DIARIO PER LA MODIFICA
                     document.getElementById(`edit-nota-${pIdx}-${nIdx}`).onclick = (e) => {
                         e.stopPropagation();
-                        const nuovoTestoNota = prompt("Modifica nota diario:", n.testo);
-                        if(nuovoTestoNota !== null) {
-                            curPz.diagnosi[curDiagIdx].piani[pIdx].diario[nIdx].testo = nuovoTestoNota;
-                            setSubmittingState(true);
-                            salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false));
-                        }
+                        globalEditIdxNota = nIdx;
+                        document.getElementById(`date-nota-${pIdx}`).value = n.data;
+                        document.getElementById(`in-nota-${pIdx}`).value = n.testo;
+                        document.getElementById(`add-nota-${pIdx}`).textContent = "SALVA NOTA";
+                        formNota.classList.remove('hidden');
+                        btnShow.classList.add('hidden');
                     };
                 });
             }
         });
     }
 
+    // ---- LOGICA DIARIO COMPATIBILE CON MODIFICA ----
     const aggiungiNota = async (pIdx) => {
         const t = document.getElementById('in-nota-' + pIdx).value.trim();
         const d = document.getElementById('date-nota-' + pIdx).value.trim() || new Date().toLocaleDateString();
         if(!t) return alert("La nota non può essere vuota."); 
-        curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
+
+        if (globalEditIdxNota !== null) {
+            // MODIFICA NOTA DIARIO IN CORSO
+            curPz.diagnosi[curDiagIdx].piani[pIdx].diario[globalEditIdxNota].data = d;
+            curPz.diagnosi[curDiagIdx].piani[pIdx].diario[globalEditIdxNota].testo = t;
+        } else {
+            // NUOVO INSERIMENTO NOTA DIARIO
+            curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
+        }
+
         try {
-            setSubmittingState(true); await salvaPazienteSuCloud(curPz); renderImbuto();
-        }catch(e){} finally { setSubmittingState(false); }
+            setSubmittingState(true); 
+            await salvaPazienteSuCloud(curPz); 
+            globalEditIdxNota = null;
+            renderImbuto();
+        } catch(e){} finally { setSubmittingState(false); }
     }
 
     const eliminaPiano = async (idx) => { if(confirm("Eliminare questo piano?")) { curPz.diagnosi[curDiagIdx].piani.splice(idx, 1); setSubmittingState(true); salvaPazienteSuCloud(curPz).then(() => renderImbuto()).finally(() => setSubmittingState(false)); } }
@@ -740,10 +773,14 @@
     const apriModalPaziente = (edit) => {
         editMode = edit;
         if(edit) {
+            document.getElementById('title-modal-pz').textContent = "Modifica Anagrafica";
             document.getElementById('m-nome').value = curPz.nome; document.getElementById('m-cf').value = curPz.cf;
             document.getElementById('m-nascita').value = curPz.nascita; document.getElementById('m-via').value = curPz.via;
             document.getElementById('m-tel').value = curPz.tel; document.getElementById('m-email').value = curPz.email;
-        } else { ['m-nome','m-nascita','m-via','m-cf','m-tel','m-email'].forEach(id => document.getElementById(id).value=""); }
+        } else { 
+            document.getElementById('title-modal-pz').textContent = "Anagrafica Paziente";
+            ['m-nome','m-nascita','m-via','m-cf','m-tel','m-email'].forEach(id => document.getElementById(id).value=""); 
+        }
         document.getElementById('modal-pz').classList.remove('hidden');
     }
 
@@ -758,14 +795,12 @@
             .diag-title { background: #eee; padding: 8px; font-weight: bold; margin-bottom: 10px; }
             .piano-block { margin-left: 20px; border-left: 2px solid #333; padding-left: 15px; margin-top: 15px; }
             .piano-title { font-weight: bold; text-decoration: underline; }
-            
-            /* MIGLIORAMENTO: DIARIO STAMPATO CON CARATTERE CORRETTO ED EQUILIBRATO */
             .nota-item-print { font-size: 14px; margin-top: 8px; background: #fdfdfd; border-top: 1px dashed #ddd; padding-top: 6px; color:#222; }
         </style>
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.2 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.3 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
@@ -810,8 +845,25 @@
     document.getElementById('btn-stampa-clinica').onclick = generaStampa;
     document.getElementById('btn-salva-clinica').onclick = () => salvaEChiudi();
     document.getElementById('btn-edit-anagrafica').onclick = () => apriModalPaziente(true);
-    document.getElementById('btn-apri-modal-diagnosi').onclick = () => document.getElementById('modal-diagnosi').classList.remove('hidden');
-    document.getElementById('btn-apri-modal-piano').onclick = () => document.getElementById('modal-piano').classList.remove('hidden');
+    
+    document.getElementById('btn-apri-modal-diagnosi').onclick = () => {
+        globalEditIdxDiag = null;
+        document.getElementById('title-modal-diag').textContent = "Nuova Diagnosi";
+        document.getElementById('m-diag-nome').value = "";
+        document.getElementById('m-diag-data').value = new Date().toLocaleDateString();
+        document.getElementById('m-diag-sintesi').value = "";
+        document.getElementById('carica-file-block').classList.remove('hidden');
+        document.getElementById('modal-diagnosi').classList.remove('hidden');
+    };
+    
+    document.getElementById('btn-apri-modal-piano').onclick = () => {
+        globalEditIdxPiano = null;
+        document.getElementById('title-modal-piano').textContent = "Nuovo Piano Terapeutico";
+        document.getElementById('m-piano-data').value = new Date().toLocaleDateString();
+        document.getElementById('m-piano-testo').value = "";
+        document.getElementById('btn-crea-piano').textContent = "CREA PIANO";
+        document.getElementById('modal-piano').classList.remove('hidden');
+    };
     
     document.getElementById('btn-chiudi-focus').onclick = () => {
         document.getElementById('area-focus').classList.add('hidden');
