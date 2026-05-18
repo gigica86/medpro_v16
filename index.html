@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MEDPRO v18.4 | Clinical Management (Stabile)</title>
+    <title>MEDPRO v18.5 | Clinical Management (Fixed & Verified)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -551,7 +551,7 @@
                 nome: nomeVal, 
                 data: document.getElementById('m-diag-data').value || '--', 
                 sintesi: document.getElementById('m-diag-sintesi').value, 
-                fileUrl: fileUrl, fileName: fileName, piani: [] 
+                fileUrl: fileUrl, fileName: fileName, pianos: [], piani: [] // Coesistenza di array strutturati
             });
         }
 
@@ -618,6 +618,9 @@
         const dataVal = document.getElementById('m-piano-data').value || '--';
         const testoVal = document.getElementById('m-piano-testo').value;
 
+        // Inizializza array di salvataggio di sicurezza se mancante
+        if(!curPz.diagnosi[curDiagIdx].piani) curPz.diagnosi[curDiagIdx].piani = [];
+
         if (globalEditIdxPiano !== null) {
             curPz.diagnosi[curDiagIdx].piani[globalEditIdxPiano].data = dataVal;
             curPz.diagnosi[curDiagIdx].piani[globalEditIdxPiano].testo = testoVal;
@@ -646,6 +649,8 @@
 
     const renderImbuto = () => {
         const cont = document.getElementById('focus-imbuto'); cont.innerHTML = "";
+        if(!curPz.diagnosi[curDiagIdx].piani) curPz.diagnosi[curDiagIdx].piani = [];
+        
         curPz.diagnosi[curDiagIdx].piani.forEach((p, pIdx) => {
             const isDiarioOpen = openDiarioIdx === pIdx;
             const wrapBox = document.createElement('div'); wrapBox.className = "piano-box";
@@ -694,6 +699,7 @@
                 document.getElementById(`cancel-nota-${pIdx}`).onclick = () => { formNota.classList.add('hidden'); btnShow.classList.remove('hidden'); globalEditIdxNota = null; };
                 document.getElementById(`add-nota-${pIdx}`).onclick = () => aggiungiNota(pIdx);
                 
+                if(!p.diario) p.diario = [];
                 p.diario.forEach((n, nIdx) => {
                     const notaContainer = document.createElement('div');
                     notaContainer.className = "nota-item-container";
@@ -738,6 +744,7 @@
             curPz.diagnosi[curDiagIdx].piani[pIdx].diario[globalEditIdxNota].data = d;
             curPz.diagnosi[curDiagIdx].piani[pIdx].diario[globalEditIdxNota].testo = t;
         } else {
+            if(!curPz.diagnosi[curDiagIdx].piani[pIdx].diario) curPz.diagnosi[curDiagIdx].piani[pIdx].diario = [];
             curPz.diagnosi[curDiagIdx].piani[pIdx].diario.unshift({ data: d, testo: t });
         }
 
@@ -789,7 +796,7 @@
         </head><body>
         <div class="header">
             <h1 style="margin:0; text-transform: uppercase; font-size:24px;">Cartella Clinica</h1>
-            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.4 | Generato il ${new Date().toLocaleDateString()}</p>
+            <p style="margin:0; font-size: 12px;">Sistema MEDPRO v18.5 | Generato il ${new Date().toLocaleDateString()}</p>
         </div>
         <div class="grid">
             <div><strong>Paziente:</strong> ${escapeHTML(curPz.nome)}<br><strong>Data Nascita:</strong> ${escapeHTML(curPz.nascita) || '--'}<br><strong>CF:</strong> ${escapeHTML(curPz.cf) || '--'}</div>
